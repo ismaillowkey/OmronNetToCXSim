@@ -1,0 +1,51 @@
+# Example PLC and HMI - Haiwell, Weintek & CX-Programmer temp/backup files
+**/Runtime/
+**/TempRuntime/
+**/*.bak*
+**/*.exob
+
+"Example PLC and HMI/Example HMI Haiwell/Runtime/"
+"Example PLC and HMI/Example HMI Haiwell/TempRuntime/"
+Example PLC and HMI/Example HMI Haiwell/Runtime/
+Example PLC and HMI/Example HMI Haiwell/TempRuntime/
+Example\ PLC\ and\ HMI/Example\ HMI\ Haiwell/Runtime/
+Example\ PLC\ and\ HMI/Example\ HMI\ Haiwell/TempRuntime/
+
+"Example PLC and HMI/Example HMI Weintek/OmronFinsTCP.emtp.bak1"
+"Example PLC and HMI/Example HMI Weintek/OmronFinsTCP.emtp.bak2"
+"Example PLC and HMI/Example HMI Weintek/OmronFinsTCP.emtp.bak3"
+"Example PLC and HMI/Example HMI Weintek/OmronFinsTCP.exob"
+Example PLC and HMI/Example HMI Weintek/OmronFinsTCP.emtp.bak1
+Example PLC and HMI/Example HMI Weintek/OmronFinsTCP.emtp.bak2
+Example PLC and HMI/Example HMI Weintek/OmronFinsTCP.emtp.bak3
+Example PLC and HMI/Example HMI Weintek/OmronFinsTCP.exob
+Example\ PLC\ and\ HMI/Example\ HMI\ Weintek/OmronFinsTCP.emtp.bak1
+Example\ PLC\ and\ HMI/Example\ HMI\ Weintek/OmronFinsTCP.emtp.bak2
+Example\ PLC\ and\ HMI/Example\ HMI\ Weintek/OmronFinsTCP.emtp.bak3
+Example\ PLC\ and\ HMI/Example\ HMI\ Weintek/OmronFinsTCP.exob
+
+# Build and binary folders
+bin/
+obj/
+**/bin/
+**/obj/
+publish_x86/
+publish_x86
+
+# Visual Studio / IDE temporary files
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Temporary scratch and test executables
+TestD0.*
+FindOffsets.*
+test_d0_fins.ps1
+DiffComparator.exe
+*.log
+
+# Setup installer executables
+SetupNetToCxSim_v*.exe
+SetupNetToCxSim*.exe
