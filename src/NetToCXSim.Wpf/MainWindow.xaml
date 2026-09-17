@@ -1,7 +1,7 @@
 <Window x:Class="NetToCXSim.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="NetToCxSim by ismaillowkey v0.3.0 — Omron CX-Simulator PLC I/O Bridge" 
+        Title="NetToCxSim by ismaillowkey v0.3.1 — Omron CX-Simulator PLC I/O Bridge" 
         Icon="app.ico"
         Height="820" Width="1180"
         MinHeight="600" MinWidth="1040"
@@ -252,8 +252,10 @@
                 <MenuItem Header="📖  CX-Programmer &amp; SCADA Instructions" Click="MenuGuide_Click" />
                 <MenuItem Header="🏷️  Address &amp; Register Reference (DW, D, DR, W, TC)" Click="MenuMapping_Click" />
                 <Separator/>
+                <MenuItem Header="🔄  Check for Updates..." Click="MenuCheckUpdate_Click" />
                 <MenuItem Header="ℹ️  About NetToCxSim" Click="MenuAbout_Click" />
             </MenuItem>
+            <MenuItem Header="🔄 Check for Update" Click="MenuCheckUpdate_Click" Foreground="#0284C7" FontWeight="SemiBold" ToolTip="Cek pembaruan NetToCxSim di GitHub"/>
             <MenuItem Header="☕ Donate" Click="MenuDonate_Click" Foreground="#D97706" FontWeight="SemiBold" ToolTip="Dukung author via Saweria (https://saweria.co/ismaillowkey)">
                 <MenuItem Header="Buka Saweria (https://saweria.co/ismaillowkey)" Click="MenuDonate_Click" />
             </MenuItem>
@@ -287,7 +289,7 @@
                                 <TextBlock Text="NetToCxSim" FontSize="22" FontWeight="Bold" Foreground="#0F172A"/>
                                 <TextBlock Text="by ismaillowkey" FontSize="13" FontWeight="SemiBold" Foreground="#2563EB" VerticalAlignment="Center" Margin="8,2,0,0"/>
                                 <Border Background="#10B981" CornerRadius="5" Margin="10,2,0,2" Padding="8,2">
-                                    <TextBlock Text="v0.3.0" FontSize="11" FontWeight="Bold" Foreground="White"/>
+                                    <TextBlock Text="v0.3.1" FontSize="11" FontWeight="Bold" Foreground="White"/>
                                 </Border>
 
                                 <!-- Simple / Advanced Mode Toggle in Top Header -->

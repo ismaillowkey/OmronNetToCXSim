@@ -1,13 +1,25 @@
 # NetToCxSim ⚡
 
 > **Omron CX-Simulator Ethernet FINS TCP/UDP Bridge & SCADA Simulator**  
-> *Developed by **ismaillowkey** | Version: **v0.3.0** [x86 Release]*
+> *Developed by **ismaillowkey** | Version: **v0.3.1** [x86 Release]*
 
-[![Platform](https://img.shields.io/badge/Platform-Windows%20(x86%2032--bit)-blue.svg)](https://github.com)
+[![Platform](https://img.shields.io/badge/Platform-Windows%20(x86%2032--bit)-blue.svg)](https://github.com/ismaillowkey/OmronNetToCXSim)
 [![Framework](https://img.shields.io/badge/.NET%20Framework-4.7.2-purple.svg)](https://dotnet.microsoft.com)
 [![Protocol](https://img.shields.io/badge/Protocol-Omron%20FINS%20(TCP%2FUDP)-green.svg)](https://www.ia.omron.com)
-[![License](https://img.shields.io/badge/License-MIT-orange.svg)](LICENSE)
+[![License](https://img.shields.io/badge/License-MIT-orange.svg)](https://github.com/ismaillowkey/OmronNetToCXSim)
 [![Support](https://img.shields.io/badge/Support-Saweria-yellow.svg)](https://saweria.co/ismaillowkey)
+
+<p align="left">
+  <a href="https://github.com/ismaillowkey/OmronNetToCXSim/releases/latest">
+    <img src="https://img.shields.io/badge/Download-Installer%20v0.3.1%20(Recommended)-2563EB?style=for-the-badge&logo=windows&logoColor=white" alt="Download Installer" />
+  </a>
+  <a href="https://github.com/ismaillowkey/OmronNetToCXSim/releases/latest">
+    <img src="https://img.shields.io/badge/Download-Portable%20Zip%20v0.3.1-059669?style=for-the-badge&logo=archive&logoColor=white" alt="Download Portable" />
+  </a>
+  <a href="https://github.com/ismaillowkey/OmronNetToCXSim/releases">
+    <img src="https://img.shields.io/badge/GitHub-All%20Releases-475569?style=for-the-badge&logo=github&logoColor=white" alt="All Releases" />
+  </a>
+</p>
 
 ---
 
@@ -18,6 +30,19 @@
 ---
 
 # 🇮🇩 Panduan Bahasa Indonesia
+
+### 📥 Download Aplikasi (Siap Pakai)
+File executable siap pakai dapat diunduh langsung dari halaman [**GitHub Releases**](https://github.com/ismaillowkey/OmronNetToCXSim/releases/latest):
+
+| File Download | Keterangan | Rekomendasi |
+| :--- | :--- | :---: |
+| 📦 **[SetupNetToCxSim_v0.3.1.exe](https://github.com/ismaillowkey/OmronNetToCXSim/releases/latest)** | **Windows Setup Installer** (Membuat shortcut desktop, start menu, & uninstaller) | ⭐ **Sangat Disarankan** |
+| 🗜️ **[NetToCxSim_v0.3.1_Portable.zip](https://github.com/ismaillowkey/OmronNetToCXSim/releases/latest)** | **Versi Portable (Standalone)** (Tinggal ekstrak dan jalankan tanpa perlu install) | Fleksibel |
+
+> 🔄 **Fitur Auto Update**:  
+> NetToCxSim dilengkapi menu **Check for Update** dan pengecekan pembaruan otomatis di latar belakang saat aplikasi dijalankan.
+
+---
 
 ### 📌 Tentang NetToCxSim
 **NetToCxSim** adalah aplikasi bridge jembatan jaringan ringan (32-bit) yang menghubungkan **Omron CX-Simulator (`CxCpuMain.exe`)** langsung ke jaringan Ethernet nyata melalui protokol standar **Omron FINS (TCP & UDP port 9600)**.
@@ -106,8 +131,8 @@ Dengan NetToCxSim, Anda dapat mensimulasikan dan menguji komunikasi antara ladde
 Pastikan Anda memiliki **.NET SDK** terpasang di sistem:
 ```bash
 # Clone repository
-git clone https://github.com/ismaillowkey/Omron-CXSimulatorBridge.git
-cd Omron-CXSimulatorBridge
+git clone https://github.com/ismaillowkey/OmronNetToCXSim.git
+cd OmronNetToCXSim
 
 # Build Solution
 dotnet build NetToCXSim.sln -c Release
@@ -123,6 +148,19 @@ publish_x86.bat
 ---
 
 # 🇬🇧 English Guide
+
+### 📥 Ready-to-Use Download (Releases)
+Pre-compiled executable files can be downloaded directly from [**GitHub Releases**](https://github.com/ismaillowkey/OmronNetToCXSim/releases/latest):
+
+| Download Package | Description | Recommendation |
+| :--- | :--- | :---: |
+| 📦 **[SetupNetToCxSim_v0.3.1.exe](https://github.com/ismaillowkey/OmronNetToCXSim/releases/latest)** | **Windows Setup Installer** (Creates desktop shortcut, start menu entry, & uninstaller) | ⭐ **Recommended** |
+| 🗜️ **[NetToCxSim_v0.3.1_Portable.zip](https://github.com/ismaillowkey/OmronNetToCXSim/releases/latest)** | **Portable Archive (Standalone)** (Extract and run immediately without installation) | Flexible |
+
+> 🔄 **Auto-Update Support**:  
+> NetToCxSim includes a **Check for Update** menu and non-blocking background check upon application startup.
+
+---
 
 ### 📌 About NetToCxSim
 **NetToCxSim** is a lightweight, 32-bit network bridge utility that seamlessly connects **Omron CX-Simulator (`CxCpuMain.exe`)** to real Ethernet networks using the standard **Omron FINS protocol (TCP & UDP port 9600)**.
@@ -211,8 +249,8 @@ It allows automation engineers, students, and developers to test communication b
 Ensure you have the **.NET SDK** installed on Windows:
 ```bash
 # Clone the repository
-git clone https://github.com/ismaillowkey/Omron-CXSimulatorBridge.git
-cd Omron-CXSimulatorBridge
+git clone https://github.com/ismaillowkey/OmronNetToCXSim.git
+cd OmronNetToCXSim
 
 # Build the solution
 dotnet build NetToCXSim.sln -c Release

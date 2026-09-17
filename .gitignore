@@ -46,6 +46,7 @@ test_d0_fins.ps1
 DiffComparator.exe
 *.log
 
-# Setup installer executables
+# Setup installer & release archives
 SetupNetToCxSim_v*.exe
 SetupNetToCxSim*.exe
+*.zip

@@ -1,11 +1,11 @@
 ; ========================================================
 ;  NSIS Installer Script for NetToCxSim
 ;  Author: ismaillowkey
-;  Version: 0.3.0
+;  Version: 0.3.1
 ; ========================================================
 
 !define PRODUCT_NAME "NetToCxSim"
-!define PRODUCT_VERSION "0.3.0"
+!define PRODUCT_VERSION "0.3.1"
 !define PRODUCT_PUBLISHER "ismaillowkey"
 !define PRODUCT_WEB_SITE "https://saweria.co/ismaillowkey"
 !define PRODUCT_EXE "NetToCXSim.exe"

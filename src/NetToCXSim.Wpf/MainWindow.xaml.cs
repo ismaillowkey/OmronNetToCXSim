@@ -58,6 +58,13 @@ namespace NetToCXSim
             Log($"NetToCXSim Light Edition ready. FINS Bridge active on port {_finsServer.Port}.");
 
             UpdateModeDisplay();
+
+            // Auto-check for updates in background (non-blocking)
+            _ = System.Threading.Tasks.Task.Run(async () =>
+            {
+                await System.Threading.Tasks.Task.Delay(2500);
+                await Dispatcher.InvokeAsync(() => CheckForUpdatesAsync(isManual: false));
+            });
         }
 
         private void UpdateServerPortDisplay()
@@ -581,7 +588,7 @@ namespace NetToCXSim
         private void MenuAbout_Click(object sender, RoutedEventArgs e)
         {
             string about = "NetToCxSim by ismaillowkey\n" +
-                "Version: 0.3.0 (x86)\n\n" +
+                "Version: 0.3.1 (x86)\n\n" +
                 "Omron CX-Simulator FINS TCP/UDP Bridge (Port 9600)\n\n" +
                 "Menghubungkan CX-Simulator (CxCpuMain.exe) secara langsung ke:\n" +
                 "• Haiwell Cloud SCADA\n" +
@@ -603,6 +610,81 @@ namespace NetToCXSim
             catch (Exception ex)
             {
                 MessageBox.Show($"Tidak dapat membuka browser: {ex.Message}\n\nSilakan kunjungi: https://saweria.co/ismaillowkey", "Donate via Saweria", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+
+        private async void MenuCheckUpdate_Click(object sender, RoutedEventArgs e)
+        {
+            await CheckForUpdatesAsync(isManual: true);
+        }
+
+        private async System.Threading.Tasks.Task CheckForUpdatesAsync(bool isManual)
+        {
+            try
+            {
+                System.Net.ServicePointManager.SecurityProtocol |= System.Net.SecurityProtocolType.Tls12;
+
+                string json = null;
+                using (var client = new System.Net.WebClient())
+                {
+                    client.Headers.Add("User-Agent", "NetToCxSim-App/0.3.1");
+                    client.Encoding = System.Text.Encoding.UTF8;
+                    json = await client.DownloadStringTaskAsync(new Uri("https://api.github.com/repos/ismaillowkey/OmronNetToCXSim/releases/latest"));
+                }
+
+                if (string.IsNullOrEmpty(json)) return;
+
+                var match = System.Text.RegularExpressions.Regex.Match(json, @"""tag_name""\s*:\s*""v?([0-9\.]+)""");
+                if (match.Success)
+                {
+                    string remoteVerStr = match.Groups[1].Value;
+                    if (Version.TryParse(remoteVerStr, out var remoteVer) && Version.TryParse("0.3.1", out var currentVer))
+                    {
+                        if (remoteVer > currentVer)
+                        {
+                            Log($"[UPDATE] Versi baru v{remoteVerStr} telah tersedia di GitHub!");
+                            var answer = MessageBox.Show(
+                                $"Pembaruan NetToCxSim telah tersedia!\n\n" +
+                                $"• Versi Anda: v{currentVer}\n" +
+                                $"• Versi Terbaru: v{remoteVerStr}\n\n" +
+                                $"Apakah Anda ingin membuka halaman download di GitHub?",
+                                "Pembaruan Tersedia - NetToCxSim",
+                                MessageBoxButton.YesNo,
+                                MessageBoxImage.Information);
+
+                            if (answer == MessageBoxResult.Yes)
+                            {
+                                Process.Start(new ProcessStartInfo("https://github.com/ismaillowkey/OmronNetToCXSim/releases/latest") { UseShellExecute = true });
+                            }
+                            return;
+                        }
+                    }
+                }
+
+                if (isManual)
+                {
+                    MessageBox.Show(
+                        "NetToCxSim sudah menggunakan versi terbaru (v0.3.1).\nTidak ada pembaruan yang diperlukan.",
+                        "Check for Updates",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                if (isManual)
+                {
+                    var res = MessageBox.Show(
+                        $"Gagal memeriksa pembaruan: {ex.Message}\n\nApakah Anda ingin membuka halaman rilis GitHub langsung di browser?",
+                        "Check for Updates",
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Warning);
+
+                    if (res == MessageBoxResult.Yes)
+                    {
+                        Process.Start(new ProcessStartInfo("https://github.com/ismaillowkey/OmronNetToCXSim/releases") { UseShellExecute = true });
+                    }
+                }
             }
         }
 

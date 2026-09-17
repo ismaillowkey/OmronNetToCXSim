@@ -3,7 +3,7 @@ setlocal
 cd /d "%~dp0"
 
 echo =======================================================
-echo   Publishing NetToCxSim v0.3.0 [x86 Release]
+echo   Publishing NetToCxSim v0.3.1 [x86 Release]
 echo   Author: ismaillowkey
 echo =======================================================
 echo.
