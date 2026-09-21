@@ -1,15 +1,15 @@
 ; ========================================================
 ;  NSIS Installer Script for NetToCxSim
 ;  Author: ismaillowkey
-;  Version: 0.3.1
+;  Version: 0.3.2
 ; ========================================================
 
 !define PRODUCT_NAME "NetToCxSim"
-!define PRODUCT_VERSION "0.3.1"
+!define PRODUCT_VERSION "0.3.2"
 !define PRODUCT_PUBLISHER "ismaillowkey"
 !define PRODUCT_WEB_SITE "https://saweria.co/ismaillowkey"
 !define PRODUCT_EXE "NetToCXSim.exe"
-!define STARTMENU_FOLDER "Omron NetToPlcSim"
+!define STARTMENU_FOLDER "Omron NetToCxSim"
 !define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\NetToCXSim.exe"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
@@ -52,7 +52,25 @@ SetCompressor /SOLID lzma
 ; --------------------------------------------------------
 Section "MainSection" SEC01
     SetOutPath "$INSTDIR"
-    SetOverwrite ifnewer
+    SetOverwrite on
+
+    ; Check if older version exists, silently uninstall it first
+    ReadRegStr $R0 ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "UninstallString"
+    StrCmp $R0 "" skip_old_uninstall
+    IfFileExists "$R0" 0 skip_old_uninstall
+        DetailPrint "Menghapus instalasi versi sebelumnya..."
+        ExecWait '"$R0" /S _?=$INSTDIR'
+        Delete "$R0"
+        Sleep 500
+    skip_old_uninstall:
+
+    ; Clean up legacy files before installing new files
+    Delete "$INSTDIR\NetToCXSim.exe"
+    Delete "$INSTDIR\NetToCXSim.exe.config"
+    Delete "$INSTDIR\NetToCXSim.Core.dll"
+    Delete "$INSTDIR\app.ico"
+    Delete "$INSTDIR\Saweria Donate.url"
+    Delete "$INSTDIR\uninst.exe"
 
     ; Copy published files
     File "publish_x86\NetToCXSim.exe"
@@ -88,6 +106,7 @@ Section -Post
     WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayVersion" "${PRODUCT_VERSION}"
     WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "URLInfoAbout" "${PRODUCT_WEB_SITE}"
     WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "Publisher" "${PRODUCT_PUBLISHER}"
+    WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "InstallLocation" "$INSTDIR"
 SectionEnd
 
 ; --------------------------------------------------------

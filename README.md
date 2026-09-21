@@ -1,25 +1,27 @@
 # NetToCxSim ⚡
 
 > **Omron CX-Simulator Ethernet FINS TCP/UDP Bridge & SCADA Simulator**  
-> *Developed by **ismaillowkey** | Version: **v0.3.1** [x86 Release]*
+> *Developed by **ismaillowkey** | Version: **v0.3.2***
 
-[![Platform](https://img.shields.io/badge/Platform-Windows%20(x86%2032--bit)-blue.svg)](https://github.com/ismaillowkey/OmronNetToCXSim)
-[![Framework](https://img.shields.io/badge/.NET%20Framework-4.7.2-purple.svg)](https://dotnet.microsoft.com)
-[![Protocol](https://img.shields.io/badge/Protocol-Omron%20FINS%20(TCP%2FUDP)-green.svg)](https://www.ia.omron.com)
-[![License](https://img.shields.io/badge/License-MIT-orange.svg)](https://github.com/ismaillowkey/OmronNetToCXSim)
+[![Platform](https://img.shields.io/badge/Platform-Windows%20x86%20%7C%20x64-0078D6.svg)](https://github.com/ismaillowkey/OmronNetToCXSim)
+[![.NET Framework](https://img.shields.io/badge/.NET%20Framework-4.7.2-512BD4.svg)](https://dotnet.microsoft.com)
+[![Target](https://img.shields.io/badge/Target-Omron%20CX--Simulator-C4151C.svg)](https://www.ia.omron.com)
+[![Protocol](https://img.shields.io/badge/Protocol-Omron%20FINS%20(TCP%2FUDP)-4C1.svg)](https://www.ia.omron.com)
+[![License](https://img.shields.io/badge/License-MIT-555555.svg)](https://github.com/ismaillowkey/OmronNetToCXSim/blob/main/LICENSE)
 [![Support](https://img.shields.io/badge/Support-Saweria-yellow.svg)](https://saweria.co/ismaillowkey)
 
-<p align="left">
-  <a href="https://github.com/ismaillowkey/OmronNetToCXSim/releases/latest">
-    <img src="https://img.shields.io/badge/Download-Installer%20v0.3.1%20(Recommended)-2563EB?style=for-the-badge&logo=windows&logoColor=white" alt="Download Installer" />
-  </a>
-  <a href="https://github.com/ismaillowkey/OmronNetToCXSim/releases/latest">
-    <img src="https://img.shields.io/badge/Download-Portable%20Zip%20v0.3.1-059669?style=for-the-badge&logo=archive&logoColor=white" alt="Download Portable" />
-  </a>
-  <a href="https://github.com/ismaillowkey/OmronNetToCXSim/releases">
-    <img src="https://img.shields.io/badge/GitHub-All%20Releases-475569?style=for-the-badge&logo=github&logoColor=white" alt="All Releases" />
-  </a>
-</p>
+---
+
+## 📥 Download Installer Terbaru
+
+Unduh installer setup versi terbaru pada halaman [GitHub Releases](https://github.com/ismaillowkey/OmronNetToCXSim/releases):
+
+| Berkas | Platform | Tautan Unduhan |
+| :--- | :--- | :--- |
+| **NetToCxSim (Setup Installer)** | Windows 7 / 8 / 10 / 11 (32-bit / 64-bit) | [Download Setup (.exe)](https://github.com/ismaillowkey/OmronNetToCXSim/releases/latest) |
+
+> 🔄 **Fitur Auto Update**:  
+> NetToCxSim dilengkapi menu **Check for Update** dan pengecekan pembaruan otomatis di latar belakang saat aplikasi dijalankan.
 
 ---
 
@@ -30,19 +32,6 @@
 ---
 
 # 🇮🇩 Panduan Bahasa Indonesia
-
-### 📥 Download Aplikasi (Siap Pakai)
-File executable siap pakai dapat diunduh langsung dari halaman [**GitHub Releases**](https://github.com/ismaillowkey/OmronNetToCXSim/releases/latest):
-
-| File Download | Keterangan | Rekomendasi |
-| :--- | :--- | :---: |
-| 📦 **[SetupNetToCxSim_v0.3.1.exe](https://github.com/ismaillowkey/OmronNetToCXSim/releases/latest)** | **Windows Setup Installer** (Membuat shortcut desktop, start menu, & uninstaller) | ⭐ **Sangat Disarankan** |
-| 🗜️ **[NetToCxSim_v0.3.1_Portable.zip](https://github.com/ismaillowkey/OmronNetToCXSim/releases/latest)** | **Versi Portable (Standalone)** (Tinggal ekstrak dan jalankan tanpa perlu install) | Fleksibel |
-
-> 🔄 **Fitur Auto Update**:  
-> NetToCxSim dilengkapi menu **Check for Update** dan pengecekan pembaruan otomatis di latar belakang saat aplikasi dijalankan.
-
----
 
 ### 📌 Tentang NetToCxSim
 **NetToCxSim** adalah aplikasi bridge jembatan jaringan ringan (32-bit) yang menghubungkan **Omron CX-Simulator (`CxCpuMain.exe`)** langsung ke jaringan Ethernet nyata melalui protokol standar **Omron FINS (TCP & UDP port 9600)**.
@@ -140,8 +129,8 @@ dotnet build NetToCXSim.sln -c Release
 # Publish 32-bit x86 Release
 dotnet publish src/NetToCXSim.Wpf/NetToCXSim.Wpf.csproj -c Release -r win-x86 --self-contained false -o ./publish_x86
 
-# Atau jalankan batch script build otomatis:
-publish_x86.bat
+# Atau buat installer otomatis:
+create_installer.bat
 ```
 
 ---
@@ -152,10 +141,9 @@ publish_x86.bat
 ### 📥 Ready-to-Use Download (Releases)
 Pre-compiled executable files can be downloaded directly from [**GitHub Releases**](https://github.com/ismaillowkey/OmronNetToCXSim/releases/latest):
 
-| Download Package | Description | Recommendation |
-| :--- | :--- | :---: |
-| 📦 **[SetupNetToCxSim_v0.3.1.exe](https://github.com/ismaillowkey/OmronNetToCXSim/releases/latest)** | **Windows Setup Installer** (Creates desktop shortcut, start menu entry, & uninstaller) | ⭐ **Recommended** |
-| 🗜️ **[NetToCxSim_v0.3.1_Portable.zip](https://github.com/ismaillowkey/OmronNetToCXSim/releases/latest)** | **Portable Archive (Standalone)** (Extract and run immediately without installation) | Flexible |
+| Package | Platform | Download Link |
+| :--- | :--- | :--- |
+| **NetToCxSim (Setup Installer)** | Windows 7 / 8 / 10 / 11 (32-bit / 64-bit) | [Download Setup (.exe)](https://github.com/ismaillowkey/OmronNetToCXSim/releases/latest) |
 
 > 🔄 **Auto-Update Support**:  
 > NetToCxSim includes a **Check for Update** menu and non-blocking background check upon application startup.
@@ -258,8 +246,8 @@ dotnet build NetToCXSim.sln -c Release
 # Publish 32-bit x86 Release
 dotnet publish src/NetToCXSim.Wpf/NetToCXSim.Wpf.csproj -c Release -r win-x86 --self-contained false -o ./publish_x86
 
-# Or use the one-click build script:
-publish_x86.bat
+# Or build the setup installer:
+create_installer.bat
 ```
 
 ---
@@ -267,6 +255,14 @@ publish_x86.bat
 ### ☕ Support & Donations
 If you find this software helpful for your work, projects, or studies, consider supporting the developer:
 - ☕ **Saweria:** [https://saweria.co/ismaillowkey](https://saweria.co/ismaillowkey)
+
+---
+
+### 🚀 My Apps
+- 🔴 **[Mitsubishi Net To GXsim2](https://github.com/ismaillowkey/Mitsubishi-NetToGXSim2)**
+- 🔵 **[Mitsubishi Net To GXsim3](https://github.com/ismaillowkey/Mitsubishi-NetToGXSim3)**
+- ⚡ **[Omron Net To Cx Sim](https://github.com/ismaillowkey/OmronNetToCXSim)**
+- 🏭 **[MPS Pneumatic Simulator](https://github.com/ismaillowkey/MPSPneumaticSimulator)**
 
 ---
 

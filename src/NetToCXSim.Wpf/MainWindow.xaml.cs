@@ -588,7 +588,7 @@ namespace NetToCXSim
         private void MenuAbout_Click(object sender, RoutedEventArgs e)
         {
             string about = "NetToCxSim by ismaillowkey\n" +
-                "Version: 0.3.1 (x86)\n\n" +
+                "Version: 0.3.2 (x86)\n\n" +
                 "Omron CX-Simulator FINS TCP/UDP Bridge (Port 9600)\n\n" +
                 "Menghubungkan CX-Simulator (CxCpuMain.exe) secara langsung ke:\n" +
                 "• Haiwell Cloud SCADA\n" +
@@ -601,16 +601,41 @@ namespace NetToCXSim
             MessageBox.Show(about, "About NetToCxSim", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
-        private void MenuDonate_Click(object sender, RoutedEventArgs e)
+        private void OpenExternalLink(string url)
         {
             try
             {
-                Process.Start(new ProcessStartInfo("https://saweria.co/ismaillowkey") { UseShellExecute = true });
+                Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Tidak dapat membuka browser: {ex.Message}\n\nSilakan kunjungi: https://saweria.co/ismaillowkey", "Donate via Saweria", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show($"Tidak dapat membuka tautan: {ex.Message}\n\nSilakan buka di browser:\n{url}", "Buka Tautan", MessageBoxButton.OK, MessageBoxImage.Information);
             }
+        }
+
+        private void MenuAppNetToGXSim2_Click(object sender, RoutedEventArgs e)
+        {
+            OpenExternalLink("https://github.com/ismaillowkey/Mitsubishi-NetToGXSim2");
+        }
+
+        private void MenuAppNetToGXSim3_Click(object sender, RoutedEventArgs e)
+        {
+            OpenExternalLink("https://github.com/ismaillowkey/Mitsubishi-NetToGXSim3");
+        }
+
+        private void MenuAppNetToCXSim_Click(object sender, RoutedEventArgs e)
+        {
+            OpenExternalLink("https://github.com/ismaillowkey/OmronNetToCXSim");
+        }
+
+        private void MenuAppMPSPneumatic_Click(object sender, RoutedEventArgs e)
+        {
+            OpenExternalLink("https://github.com/ismaillowkey/MPSPneumaticSimulator");
+        }
+
+        private void MenuDonate_Click(object sender, RoutedEventArgs e)
+        {
+            OpenExternalLink("https://saweria.co/ismaillowkey");
         }
 
         private async void MenuCheckUpdate_Click(object sender, RoutedEventArgs e)
@@ -627,7 +652,7 @@ namespace NetToCXSim
                 string json = null;
                 using (var client = new System.Net.WebClient())
                 {
-                    client.Headers.Add("User-Agent", "NetToCxSim-App/0.3.1");
+                    client.Headers.Add("User-Agent", "NetToCxSim-App/0.3.2");
                     client.Encoding = System.Text.Encoding.UTF8;
                     json = await client.DownloadStringTaskAsync(new Uri("https://api.github.com/repos/ismaillowkey/OmronNetToCXSim/releases/latest"));
                 }
@@ -638,7 +663,7 @@ namespace NetToCXSim
                 if (match.Success)
                 {
                     string remoteVerStr = match.Groups[1].Value;
-                    if (Version.TryParse(remoteVerStr, out var remoteVer) && Version.TryParse("0.3.1", out var currentVer))
+                    if (Version.TryParse(remoteVerStr, out var remoteVer) && Version.TryParse("0.3.2", out var currentVer))
                     {
                         if (remoteVer > currentVer)
                         {
@@ -664,7 +689,7 @@ namespace NetToCXSim
                 if (isManual)
                 {
                     MessageBox.Show(
-                        "NetToCxSim sudah menggunakan versi terbaru (v0.3.1).\nTidak ada pembaruan yang diperlukan.",
+                        "NetToCxSim sudah menggunakan versi terbaru (v0.3.2).\nTidak ada pembaruan yang diperlukan.",
                         "Check for Updates",
                         MessageBoxButton.OK,
                         MessageBoxImage.Information);
