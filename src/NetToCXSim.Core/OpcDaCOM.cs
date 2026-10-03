@@ -370,7 +370,7 @@ namespace NetToCXSim.Services
         [PreserveSig]
         int Next(
             int celt,
-            [Out, MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.LPWStr, SizeParamIndex = 0)] string[] rgelt,
+            IntPtr rgelt,
             IntPtr pceltFetched);
 
         [PreserveSig]

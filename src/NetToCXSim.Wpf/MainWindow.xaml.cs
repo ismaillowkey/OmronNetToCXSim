@@ -35,6 +35,12 @@ namespace NetToCXSim
         {
             InitializeComponent();
 
+            Title = $"NetToCxSim by Ismail Lowkey v{AppVersionInfo.VersionString} — Omron CX-Simulator PLC I/O Bridge";
+            if (TxtVersionBadge != null)
+            {
+                TxtVersionBadge.Text = $"v{AppVersionInfo.VersionString}";
+            }
+
             _simEngine = new OmronSimulatorEngine();
 
             InitializeInputRack();
@@ -598,14 +604,14 @@ namespace NetToCXSim
 
         private void MenuAbout_Click(object sender, RoutedEventArgs e)
         {
-            string about = "NetToCxSim by ismaillowkey\n" +
-                "Version: 0.4.4 (x86)\n\n" +
+            string about = "NetToCxSim by Ismail Lowkey\n" +
+                $"Version: {AppVersionInfo.VersionString} (x86)\n\n" +
                 "Omron CX-Simulator FINS TCP/UDP Bridge (Port 9600)\n\n" +
                 "Directly connects CX-Simulator (CxCpuMain.exe) to:\n" +
                 "• Weintek EasyBuilder Pro\n" +
                 "• HslCommunication / C# / Python\n" +
                 "• Node-RED, Kepware, and other SCADA\n\n" +
-                "Created by: ismaillowkey\n" +
+                "Created by: Ismail Lowkey\n" +
                 "Support & Donation: https://saweria.co/ismaillowkey";
 
             MessageBox.Show(about, "About NetToCxSim", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -662,7 +668,7 @@ namespace NetToCXSim
                 string json = null;
                 using (var client = new System.Net.WebClient())
                 {
-                    client.Headers.Add("User-Agent", "NetToCxSim-App/0.4.4");
+                    client.Headers.Add("User-Agent", $"NetToCxSim-App/{AppVersionInfo.VersionString}");
                     client.Encoding = System.Text.Encoding.UTF8;
                     json = await client.DownloadStringTaskAsync(new Uri("https://api.github.com/repos/ismaillowkey/OmronNetToCXSim/releases/latest"));
                 }
@@ -673,14 +679,14 @@ namespace NetToCXSim
                 if (match.Success)
                 {
                     string remoteVerStr = match.Groups[1].Value;
-                    if (Version.TryParse(remoteVerStr, out var remoteVer) && Version.TryParse("0.4.4", out var currentVer))
+                    if (Version.TryParse(remoteVerStr, out var remoteVer))
                     {
-                        if (remoteVer > currentVer)
+                        if (remoteVer > AppVersionInfo.Version)
                         {
                             Log($"[UPDATE] New version v{remoteVerStr} is available on GitHub!");
                             var answer = MessageBox.Show(
                                 $"A NetToCxSim update is available!\n\n" +
-                                $"• Your version: v{currentVer}\n" +
+                                $"• Your version: v{AppVersionInfo.VersionString}\n" +
                                 $"• Latest version: v{remoteVerStr}\n\n" +
                                 $"Do you want to open the download page on GitHub?",
                                 "Update Available - NetToCxSim",
@@ -699,7 +705,7 @@ namespace NetToCXSim
                 if (isManual)
                 {
                     MessageBox.Show(
-                        "NetToCxSim is already up to date (v0.4.4).\nNo update is required.",
+                        $"NetToCxSim is already up to date (v{AppVersionInfo.VersionString}).\nNo update is required.",
                         "Check for Updates",
                         MessageBoxButton.OK,
                         MessageBoxImage.Information);

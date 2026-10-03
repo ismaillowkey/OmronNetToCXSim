@@ -1,16 +1,19 @@
 ; ========================================================
 ;  NSIS Installer Script for NetToCxSim
-;  Author: ismaillowkey
-;  Version: 0.4.4
+;  Author: Ismail Lowkey
 ; ========================================================
 
-!define PRODUCT_NAME "NetToCxSim"
-!define PRODUCT_VERSION "0.4.4"
-!define PRODUCT_PUBLISHER "ismaillowkey"
-!define PRODUCT_WEB_SITE "https://saweria.co/ismaillowkey"
 !define PRODUCT_EXE "NetToCXSim.exe"
+
+; Auto-read version from compiled executable
+!getdllversion "publish_x86\${PRODUCT_EXE}" expv_
+!define PRODUCT_VERSION "${expv_1}.${expv_2}.${expv_3}"
+
+!define PRODUCT_NAME "NetToCxSim"
+!define PRODUCT_PUBLISHER "Ismail Lowkey"
+!define PRODUCT_WEB_SITE "https://saweria.co/ismaillowkey"
 !define STARTMENU_FOLDER "Omron NetToCxSim"
-!define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\NetToCXSim.exe"
+!define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\${PRODUCT_EXE}"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 !define PRODUCT_UNINST_ROOT_KEY "HKLM"
 
@@ -24,6 +27,15 @@ InstallDir "$PROGRAMFILES\NetToCxSim"
 InstallDirRegKey HKLM "${PRODUCT_DIR_REGKEY}" ""
 RequestExecutionLevel admin
 SetCompressor /SOLID lzma
+
+; Version Information Resource
+VIProductVersion "${expv_1}.${expv_2}.${expv_3}.${expv_4}"
+VIAddVersionKey "ProductName" "${PRODUCT_NAME}"
+VIAddVersionKey "CompanyName" "${PRODUCT_PUBLISHER}"
+VIAddVersionKey "LegalCopyright" "Copyright © Ismail Lowkey"
+VIAddVersionKey "FileDescription" "${PRODUCT_NAME} Setup Installer"
+VIAddVersionKey "FileVersion" "${PRODUCT_VERSION}.0"
+VIAddVersionKey "ProductVersion" "${PRODUCT_VERSION}.0"
 
 ; Interface Configuration
 !define MUI_ICON "app.ico"

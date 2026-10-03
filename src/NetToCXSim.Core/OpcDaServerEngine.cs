@@ -656,10 +656,10 @@ namespace NetToCXSim.Services
             {
                 OPCSERVERSTATUS status = new OPCSERVERSTATUS
                 {
-                    szVendorInfo = "NetToCxSim by ismaillowkey",
-                    wMajorVersion = 0,
-                    wMinorVersion = 4,
-                    wBuildNumber = 3,
+                    szVendorInfo = "NetToCxSim by Ismail Lowkey",
+                    wMajorVersion = (short)AppVersionInfo.Major,
+                    wMinorVersion = (short)AppVersionInfo.Minor,
+                    wBuildNumber = (short)AppVersionInfo.Build,
                     dwServerState = _isRunning ? OPCSERVERSTATE.OPC_STATUS_RUNNING : OPCSERVERSTATE.OPC_STATUS_NOCONFIG,
                     dwGroupCount = _groups.Count,
                     dwBandWidth = 0
@@ -732,7 +732,28 @@ namespace NetToCXSim.Services
             return OpcDaConstants.S_OK;
         }
 
-        public int ChangeBrowsePosition(OPCBROWSEDIRECTION dwBrowseDirection, string szString) => OpcDaConstants.S_OK;
+        public int ChangeBrowsePosition(OPCBROWSEDIRECTION dwBrowseDirection, string szString)
+        {
+            switch (dwBrowseDirection)
+            {
+                case OPCBROWSEDIRECTION.OPC_BROWSE_UP:
+                    // OPC DA 2.05a Spec Section 4.5.2.2:
+                    // "If already at the root of the hierarchy, then this function shall return E_FAIL."
+                    // Returning S_OK here causes clients (like KEPServerEX) to loop infinitely rewinding to root!
+                    return OpcDaConstants.E_FAIL;
+
+                case OPCBROWSEDIRECTION.OPC_BROWSE_TO:
+                    if (string.IsNullOrEmpty(szString))
+                    {
+                        return OpcDaConstants.S_OK;
+                    }
+                    return unchecked((int)0xC0040004); // OPC_E_UNKNOWNITEMID
+
+                case OPCBROWSEDIRECTION.OPC_BROWSE_DOWN:
+                default:
+                    return unchecked((int)0xC0040004); // OPC_E_UNKNOWNITEMID
+            }
+        }
 
         public int BrowseOPCItemIDs(
             OPCBROWSETYPE dwBrowseFilterType,
@@ -743,9 +764,8 @@ namespace NetToCXSim.Services
         {
             var names = new List<string>();
 
-            // When browsing flat address space:
-            // Branches are folders (we return empty so client knows there are no sub-folders)
-            // Leaf or Flat or any other request returns all tags!
+            // In a flat address space, folders/branches do not exist (0 branches)
+            // Leaves, flat, and general browse requests return all configured PLC tags
             if (dwBrowseFilterType != OPCBROWSETYPE.OPC_BRANCH)
             {
                 lock (_lock)
@@ -769,7 +789,7 @@ namespace NetToCXSim.Services
             }
 
             ppIEnumString = new OpcEnumString(names);
-            Log($"OPC Browse requested (Filter: {dwBrowseFilterType}). Returning {names.Count} tags.");
+            Log($"OPC Browse (Filter: {dwBrowseFilterType}, Criteria: '{szFilterCriteria}'). Returning {names.Count} tags.");
             return OpcDaConstants.S_OK;
         }
 
@@ -881,19 +901,30 @@ namespace NetToCXSim.Services
             out IntPtr ppErrors)
         {
             ppszNewItemIDs = IntPtr.Zero;
-            ppErrors = Marshal.AllocCoTaskMem(dwCount * 4);
-            for (int i = 0; i < dwCount; i++) Marshal.WriteInt32(ppErrors, i * 4, OpcDaConstants.E_NOTIMPL);
-            return OpcDaConstants.S_OK;
+            ppErrors = IntPtr.Zero;
+            return OpcDaConstants.E_NOTIMPL;
         }
         #endregion
 
         public OpcTagItem FindTag(string identifier)
         {
+            if (string.IsNullOrEmpty(identifier)) return null;
+
+            string cleanId = identifier.Trim();
+            if (cleanId.StartsWith("OmronIO.", StringComparison.OrdinalIgnoreCase))
+                cleanId = cleanId.Substring(8);
+            else if (cleanId.StartsWith("OmronIO/", StringComparison.OrdinalIgnoreCase))
+                cleanId = cleanId.Substring(8);
+            else if (cleanId.StartsWith("OmronIO\\", StringComparison.OrdinalIgnoreCase))
+                cleanId = cleanId.Substring(8);
+
             lock (_lock)
             {
                 foreach (var t in Tags)
                 {
-                    if (t.TagName.Equals(identifier, StringComparison.OrdinalIgnoreCase) ||
+                    if (t.TagName.Equals(cleanId, StringComparison.OrdinalIgnoreCase) ||
+                        t.Address.Equals(cleanId, StringComparison.OrdinalIgnoreCase) ||
+                        t.TagName.Equals(identifier, StringComparison.OrdinalIgnoreCase) ||
                         t.Address.Equals(identifier, StringComparison.OrdinalIgnoreCase))
                     {
                         return t;
@@ -1011,14 +1042,19 @@ namespace NetToCXSim.Services
                     OpcTagItem tag = _server.FindTag(def.szItemID);
                     if (tag == null)
                     {
+                        string rawAddr = def.szItemID ?? "";
+                        if (rawAddr.StartsWith("OmronIO.", StringComparison.OrdinalIgnoreCase)) rawAddr = rawAddr.Substring(8);
+                        else if (rawAddr.StartsWith("OmronIO/", StringComparison.OrdinalIgnoreCase)) rawAddr = rawAddr.Substring(8);
+                        else if (rawAddr.StartsWith("OmronIO\\", StringComparison.OrdinalIgnoreCase)) rawAddr = rawAddr.Substring(8);
+
                         // If tag name not in config, see if it's a direct PLC address (e.g. "0.00", "D10")
-                        if (OmronSimulatorEngine.TryParseAddress(def.szItemID, out _, out _, out _))
+                        if (OmronSimulatorEngine.TryParseAddress(rawAddr, out _, out _, out _))
                         {
                             tag = new OpcTagItem
                             {
                                 TagName = def.szItemID,
-                                Address = def.szItemID,
-                                DataType = def.szItemID.ToUpperInvariant().Contains(".") ? OpcDataType.Bool : OpcDataType.Int16
+                                Address = rawAddr,
+                                DataType = rawAddr.ToUpperInvariant().Contains(".") ? OpcDataType.Bool : OpcDataType.Int16
                             };
                             _server.AddTag(tag);
                         }
@@ -1063,9 +1099,60 @@ namespace NetToCXSim.Services
 
         public int ValidateItems(int dwCount, IntPtr pItemArray, bool bBlobUpdate, out IntPtr ppValidationResults, out IntPtr ppErrors)
         {
-            ppValidationResults = IntPtr.Zero;
+            int structSize = Marshal.SizeOf(typeof(OPCITEMDEF));
+            int resSize = Marshal.SizeOf(typeof(OPCITEMRESULT));
+
+            ppValidationResults = Marshal.AllocCoTaskMem(dwCount * resSize);
             ppErrors = Marshal.AllocCoTaskMem(dwCount * 4);
-            for (int i = 0; i < dwCount; i++) Marshal.WriteInt32(ppErrors, i * 4, OpcDaConstants.S_OK);
+
+            lock (_lock)
+            {
+                for (int i = 0; i < dwCount; i++)
+                {
+                    IntPtr pCurrent = (IntPtr)((long)pItemArray + i * structSize);
+                    OPCITEMDEF def = (OPCITEMDEF)Marshal.PtrToStructure(pCurrent, typeof(OPCITEMDEF));
+
+                    OpcTagItem tag = _server.FindTag(def.szItemID);
+                    if (tag == null)
+                    {
+                        string rawAddr = def.szItemID ?? "";
+                        if (rawAddr.StartsWith("OmronIO.", StringComparison.OrdinalIgnoreCase)) rawAddr = rawAddr.Substring(8);
+                        else if (rawAddr.StartsWith("OmronIO/", StringComparison.OrdinalIgnoreCase)) rawAddr = rawAddr.Substring(8);
+                        else if (rawAddr.StartsWith("OmronIO\\", StringComparison.OrdinalIgnoreCase)) rawAddr = rawAddr.Substring(8);
+
+                        if (OmronSimulatorEngine.TryParseAddress(rawAddr, out _, out _, out _))
+                        {
+                            tag = new OpcTagItem
+                            {
+                                TagName = def.szItemID,
+                                Address = rawAddr,
+                                DataType = rawAddr.ToUpperInvariant().Contains(".") ? OpcDataType.Bool : OpcDataType.Int16
+                            };
+                        }
+                    }
+
+                    OPCITEMRESULT res = new OPCITEMRESULT();
+                    if (tag != null)
+                    {
+                        res.hServer = 0;
+                        res.vtCanonicalDataType = GetVarType(tag.DataType);
+                        res.dwAccessRights = 3; // Read & Write
+                        res.pBlob = IntPtr.Zero;
+                        res.dwBlobSize = 0;
+
+                        Marshal.StructureToPtr(res, (IntPtr)((long)ppValidationResults + i * resSize), false);
+                        Marshal.WriteInt32(ppErrors, i * 4, OpcDaConstants.S_OK);
+                    }
+                    else
+                    {
+                        res.hServer = 0;
+                        res.pBlob = IntPtr.Zero;
+                        res.dwBlobSize = 0;
+                        Marshal.StructureToPtr(res, (IntPtr)((long)ppValidationResults + i * resSize), false);
+                        Marshal.WriteInt32(ppErrors, i * 4, OpcDaConstants.OPC_E_UNKNOWNITEMID);
+                    }
+                }
+            }
             return OpcDaConstants.S_OK;
         }
 
@@ -1540,14 +1627,16 @@ namespace NetToCXSim.Services
             _items = items ?? new List<string>();
         }
 
-        public int Next(int celt, string[] rgelt, IntPtr pceltFetched)
+        public int Next(int celt, IntPtr rgelt, IntPtr pceltFetched)
         {
-            if (rgelt == null || celt <= 0) return OpcDaConstants.E_INVALIDARG;
+            if (rgelt == IntPtr.Zero || celt <= 0) return OpcDaConstants.E_INVALIDARG;
 
             int fetched = 0;
             while (_index < _items.Count && fetched < celt)
             {
-                rgelt[fetched++] = _items[_index++];
+                IntPtr strPtr = Marshal.StringToCoTaskMemUni(_items[_index++]);
+                Marshal.WriteIntPtr(rgelt, fetched * IntPtr.Size, strPtr);
+                fetched++;
             }
 
             if (pceltFetched != IntPtr.Zero)

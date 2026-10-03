@@ -1,7 +1,7 @@
 # NetToCxSim ⚡
 
 > **Omron CX-Simulator Ethernet FINS TCP/UDP Bridge & SCADA Simulator**  
-> *Developed by **ismaillowkey** | Version: **v0.4.4***
+> *Developed by **Ismail Lowkey** | Version: **v0.4.6***
 
 [![Platform](https://img.shields.io/badge/Platform-Windows%20x86%20%7C%20x64-0078D6.svg)](https://github.com/ismaillowkey/OmronNetToCXSim)
 [![.NET Framework](https://img.shields.io/badge/.NET%20Framework-4.7.2-512BD4.svg)](https://dotnet.microsoft.com)
@@ -22,6 +22,23 @@ Unduh installer setup versi terbaru pada halaman [GitHub Releases](https://githu
 
 > 🔄 **Fitur Auto Update**:  
 > NetToCxSim dilengkapi menu **Check for Update** dan pengecekan pembaruan otomatis di latar belakang saat aplikasi dijalankan.
+
+---
+
+## 🚀 What's New in v0.4.6
+
+- 🏷️ **KEPServerEX Tag Generation & Browse Fix**: Fully implemented `IOPCItemMgt.ValidateItems` returning complete `OPCITEMRESULT` structures with canonical VARTYPE conversion and access rights, enabling KEPServerEX to automatically generate tags without failure. Corrected `ChangeBrowsePosition(OPC_BROWSE_UP)` boundary checking to prevent client infinite browse loops.
+- 📦 **Single Source of Truth (SSOT) Versioning**: Centralized versioning into `Directory.Build.props` (`0.4.6`). All assemblies, UI titles, badges, update checkers, and NSIS installers automatically inherit versioning from a single configuration file.
+- 👤 **Standardized Publisher**: Standardized publisher name to **Ismail Lowkey** across Windows Programs & Features uninstall registry, assembly metadata, installer version resources, and UI branding.
+
+---
+
+## 🚀 What's New in v0.4.5
+
+- ⚡ **Universal Flat Address Space (No Duplication / No Hangs)**: Reverted address space to standard clean Flat namespace (`OPC_NS_FLAT`). Eliminates folder nesting and duplicate tag display across OPC Expert, InduSoft Web Studio, Factory I/O, and MatrikonOPC Explorer.
+- 🛠️ **Kepware "Select Import Items" Fix**: Fixed COM `LookupItemIDs` return codes (`E_NOTIMPL`) preventing KEPServerEX crashes or indefinite hangs when importing tags from the server.
+- ⚡ **Kepware OPC Quick Client & Native C++ Compatibility**: Re-engineered `IEnumString::Next` COM marshaling to raw unmanaged pointers with `Marshal.StringToCoTaskMemUni`, enabling native C++ OPC clients to browse all tags without RPC marshaling faults.
+- ⚠️ **OPC Client Lifecycle Notice Banner**: Added a high-contrast red notice banner in the OPC DA Server UI tab explaining that active OPC clients will trigger Windows COM to relaunch NetToCxSim if closed.
 
 ---
 
@@ -68,15 +85,21 @@ Dengan NetToCxSim, Anda dapat mensimulasikan dan menguji komunikasi antara ladde
    - Multi-client concurrency (bisa dihubungkan ke HMI, SCADA, dan logger sekaligus).
    - **Port Auto-Fallback**: Jika port 9600 sedang digunakan, otomatis mencoba port 9601, 9602, dst.
 
-3. **Built-in Workstation & SCADA Simulator**:
-   - **Digital Rack I/O**: 13 Toggle Switch Digital Inputs (CIO 0.00 - 0.12) & 8 Pilot Lamps Outputs (CIO 100.00 - 100.07).
-   - **Filling Water Tank Simulator**: Visualisasi tangki air 2D/3D interaktif lengkap dengan inlet pump, inlet valve, drain valve, float switch low (`CIO 0.02`), float switch high (`CIO 0.03`), dan register level analog (`DM 10`).
+3. **OPC DA 2.05a & 1.0a Classic Server**:
+   - Server COM bawaan (zero-dependency) dengan workstation manajemen tag ala Kepware.
+   - Mendukung synchronous, asynchronous (`IOPCAsyncIO2`), dan live subscription callbacks (`IOPCDataCallback`) untuk MatrikonOPC Explorer & OPC Expert.
+   - > 💡 **OPC DA Client Lifecycle Note**:  
+   - > NetToCxSim is registered as a Windows COM `LocalServer32`. If an external OPC DA client (e.g., OPC Expert, Matrikon, SCADA) is connected or actively polling and NetToCxSim is closed, Windows COM will automatically relaunch the application. To exit completely, disconnect or terminate the OPC DA client first.
 
-4. **Mode Simple vs Advanced**:
+4. **Built-in Workstation & SCADA Simulator**:
+   - **Digital Rack I/O**: 13 Toggle Switch Digital Inputs (CIO 0.00 - 0.12) & 8 Pilot Lamps Outputs (CIO 100.00 - 100.07).
+   - **Filling Water Tank Simulator**: Visualisasi tangki air 2D/3D interaktif lengkap dengan inlet pump, inlet valve, drain valve, float switch low (`CIO 0.02`), float switch high (`CIO 0.03`), dan register level analog (`D10`).
+
+5. **Mode Simple vs Advanced**:
    - **Simple Mode**: Tampilan bersih dan fokus pada simulasi SCADA/proses.
    - **Advanced Mode**: Membuka tab **Inspector & Log** yang dilengkapi fitur Read/Write address register PLC secara langsung serta pemantau live log trafik FINS.
 
-5. **Topologi Alur Data Visual**:
+6. **Topologi Alur Data Visual**:
    - Dilengkapi diagram arsitektur interaktif yang menjelaskan hubungan data antara IDE, simulator, bridge, dan HMI/SCADA.
 
 ---
@@ -185,15 +208,21 @@ It allows automation engineers, students, and developers to test communication b
    - Supports concurrent multi-client connections.
    - **Port Auto-Fallback**: Automatically shifts to 9601, 9602, etc. if port 9600 is occupied.
 
-3. **Integrated SCADA Workstations**:
-   - **Digital Rack I/O**: 13 toggle switches (CIO 0.00 - 0.12) & 8 pilot lamps (CIO 100.00 - 100.07).
-   - **Water Tank Filling Simulator**: 2D/3D physics-based simulation with inlet pump, inlet valve, drain valve, low level float switch (`CIO 0.02`), high level float switch (`CIO 0.03`), and analog level feedback (`DM 10`).
+3. **OPC DA 2.05a & 1.0a Classic Server**:
+   - Native, zero-dependency COM server with Kepware-style tag management workstation.
+   - Supports synchronous, asynchronous (`IOPCAsyncIO2`), and live subscription callbacks (`IOPCDataCallback`) for MatrikonOPC Explorer & OPC Expert.
+   - > 💡 **OPC DA Client Lifecycle Notice**:  
+   - > NetToCxSim is registered as a Windows COM `LocalServer32`. If an external OPC DA client (e.g., OPC Expert, Matrikon, SCADA) is connected or actively polling and NetToCxSim is closed, Windows COM will automatically relaunch the application. To exit completely, disconnect or terminate the OPC DA client first.
 
-4. **Simple vs Advanced Modes**:
+4. **Integrated SCADA Workstations**:
+   - **Digital Rack I/O**: 13 toggle switches (CIO 0.00 - 0.12) & 8 pilot lamps (CIO 100.00 - 100.07).
+   - **Water Tank Filling Simulator**: 2D/3D physics-based simulation with inlet pump, inlet valve, drain valve, low level float switch (`CIO 0.02`), high level float switch (`CIO 0.03`), and analog level feedback (`D10`).
+
+5. **Simple vs Advanced Modes**:
    - **Simple Mode**: Minimalist interface focused purely on simulation and testing.
    - **Advanced Mode**: Expands the **Inspector & Log** tab featuring custom variable inspector (Read/Toggle/Write) and real-time FINS communication logs.
 
-5. **Visual Architecture Diagram**:
+6. **Visual Architecture Diagram**:
    - Embedded interactive diagram illustrating data flow between IDE, virtual engine, bridge, and SCADA clients.
 
 ---

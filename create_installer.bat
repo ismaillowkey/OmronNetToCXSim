@@ -5,7 +5,7 @@ cd /d "%~dp0"
 echo =======================================================
 echo   NetToCxSim NSIS Installer Builder
 echo   Output: SetupNetToCxSim_v*.exe
-echo   Author: ismaillowkey
+echo   Author: Ismail Lowkey
 echo =======================================================
 echo.
 

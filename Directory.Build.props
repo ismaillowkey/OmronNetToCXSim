@@ -1,0 +1,11 @@
+<Project>
+  <PropertyGroup>
+    <AppVersion>0.4.6</AppVersion>
+    <Version>$(AppVersion)</Version>
+    <AssemblyVersion>$(AppVersion).0</AssemblyVersion>
+    <FileVersion>$(AppVersion).0</FileVersion>
+    <Company>Ismail Lowkey</Company>
+    <Authors>Ismail Lowkey</Authors>
+    <Product>NetToCxSim by Ismail Lowkey</Product>
+  </PropertyGroup>
+</Project>
