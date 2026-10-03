@@ -50,3 +50,12 @@ DiffComparator.exe
 SetupNetToCxSim_v*.exe
 SetupNetToCxSim*.exe
 *.zip
+
+# Runtime data & OPC tags
+opc_tags.json
+*.csv
+
+# Agent context / instructions
+GEMINI.md
+.gemini/
+

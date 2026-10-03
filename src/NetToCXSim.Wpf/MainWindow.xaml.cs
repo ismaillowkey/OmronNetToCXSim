@@ -16,6 +16,7 @@ namespace NetToCXSim
     {
         private readonly OmronSimulatorEngine _simEngine;
         private readonly OmronFinsServer _finsServer;
+        private readonly OpcDaServerEngine _opcDaServer;
         private readonly DispatcherTimer _pollTimer;
 
         // UI components for Inputs (0.00 to 0.12 = 13 inputs)
@@ -46,6 +47,38 @@ namespace NetToCXSim
                 Dispatcher.BeginInvoke((Action)(() => Log(msg)));
             };
             _finsServer.Start();
+
+            // Initialize OPC DA Classic Server (Auto-start on app launch & auto-save enabled)
+            _opcDaServer = new OpcDaServerEngine(_simEngine);
+            _opcDaServer.OnLog += (msg) =>
+            {
+                Dispatcher.BeginInvoke((Action)(() => Log(msg)));
+            };
+            _opcDaServer.OnStateChanged += () =>
+            {
+                Dispatcher.BeginInvoke((Action)UpdateOpcServerUI);
+            };
+            DgOpcTags.ItemsSource = _opcDaServer.Tags;
+            TxtTagStoragePath.Text = $"Storage: {System.IO.Path.GetFileName(_opcDaServer.StoragePath)}";
+            TxtTagStoragePath.ToolTip = _opcDaServer.StoragePath;
+            _opcDaServer.StartServer();
+            UpdateOpcServerUI();
+
+            // Auto-register OPC DA Server in Windows Registry on app startup so SCADA / OPC clients immediately detect it
+            try
+            {
+                string currentExe = System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName ?? "";
+                if (!string.IsNullOrEmpty(currentExe))
+                {
+                    OpcRegistryHelper.RegisterServer(currentExe, out _);
+                }
+            }
+            catch { }
+
+            if (MainTabControl != null && TabOpcDaServer != null)
+            {
+                MainTabControl.SelectedItem = TabOpcDaServer;
+            }
 
             _pollTimer = new DispatcherTimer
             {
@@ -78,7 +111,7 @@ namespace NetToCXSim
                 }
                 if (TxtDiagramBridgePort != null)
                 {
-                    TxtDiagramBridgePort.Text = $"Port :{_finsServer.Port}";
+                    TxtDiagramBridgePort.Text = $" :{_finsServer.Port}";
                 }
             }
         }
@@ -550,53 +583,30 @@ namespace NetToCXSim
             Application.Current.Shutdown();
         }
 
-        private void MenuGuide_Click(object sender, RoutedEventArgs e)
-        {
-            string guide = "LANGKAH MENGGUNAKAN CX-SIMULATOR & SCADA:\n\n" +
-                "1. Buka program/ladder di CX-Programmer.\n" +
-                "2. Jalankan simulator: Menu Simulation -> Work Online Simulator (Ctrl+Shift+W).\n" +
-                "3. Jalankan aplikasi NetToCxSim ini.\n" +
-                "4. Jika ladder diubah: Stop simulator, lalu ulangi Step 2.\n" +
-                "5. Jika masih error: Menu PLC -> Transfer -> To PLC...\n" +
-                "6. Menu PLC -> Operating Mode -> Monitor.\n" +
-                "7. Menu PLC -> Monitor -> Monitoring.\n\n" +
-                "PENGATURAN SCADA / HMI (EasyBuilder Pro, Haiwell, dll):\n" +
-                "• Device: Omron CP1L / CP1H / CP1E (FINS TCP)\n" +
-                "• IP Address: 127.0.0.1 (Port 9600)\n" +
-                "• PLC Network: 0, Node: 1, Unit: 0";
-
-            MessageBox.Show(guide, "Panduan CX-Programmer & SCADA", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-
         private void MenuMapping_Click(object sender, RoutedEventArgs e)
         {
-            string mapping = "REFERENSI ALAMAT MEMORI / REGISTER:\n\n" +
-                "• DW (Data Word 16-bit): DW0, DW1, DW100... -> D0, D1, D100\n" +
-                "• D (Bit): D0.00, D0.01... -> DM Bit\n" +
-                "• DR (Data Register): DR0..DR15\n" +
-                "• W / WR (Work Area): W0.00 (Bit), W0 (Word)\n" +
-                "• H / HR (Holding Area): H0.00 (Bit), H0 (Word)\n" +
-                "• A / AR (Auxiliary Area): A0.00 (Bit), A0 (Word)\n" +
+            string mapping = "MEMORY ADDRESS / REGISTER REFERENCE:\n\n" +
+                "• D (Data Memory): D0, D10, D100 (Word), D0.00 (Bit)\n" +
+                "• W (Work Area): W0.00 (Bit), W0 (Word)\n" +
+                "• H (Holding Area): H0.00 (Bit), H0 (Word)\n" +
+                "• A (Auxiliary Area): A0.00 (Bit), A0 (Word)\n" +
                 "• CIO (I/O Area): 0.00..0.12 (Input), 100.00..100.07 (Output)\n" +
-                "• TC (Timer/Counter): T0 (Timer PV), C0 (Counter PV)\n\n" +
-                "PENTING untuk Haiwell Cloud SCADA:\n" +
-                "Gunakan tag 'DW' (bukan 'D') untuk menulis nilai angka Word 16-bit ke D-area!";
+                "• T / C (Timer/Counter): T0 (Timer PV), C0 (Counter PV)";
 
-            MessageBox.Show(mapping, "Referensi Alamat Register", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show(mapping, "Register Address Reference", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         private void MenuAbout_Click(object sender, RoutedEventArgs e)
         {
             string about = "NetToCxSim by ismaillowkey\n" +
-                "Version: 0.3.2 (x86)\n\n" +
+                "Version: 0.4.4 (x86)\n\n" +
                 "Omron CX-Simulator FINS TCP/UDP Bridge (Port 9600)\n\n" +
-                "Menghubungkan CX-Simulator (CxCpuMain.exe) secara langsung ke:\n" +
-                "• Haiwell Cloud SCADA\n" +
+                "Directly connects CX-Simulator (CxCpuMain.exe) to:\n" +
                 "• Weintek EasyBuilder Pro\n" +
                 "• HslCommunication / C# / Python\n" +
-                "• Node-RED, Kepware, SCADA lainnya\n\n" +
-                "Dibuat oleh: ismaillowkey\n" +
-                "Support & Donasi: https://saweria.co/ismaillowkey";
+                "• Node-RED, Kepware, and other SCADA\n\n" +
+                "Created by: ismaillowkey\n" +
+                "Support & Donation: https://saweria.co/ismaillowkey";
 
             MessageBox.Show(about, "About NetToCxSim", MessageBoxButton.OK, MessageBoxImage.Information);
         }
@@ -609,7 +619,7 @@ namespace NetToCXSim
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Tidak dapat membuka tautan: {ex.Message}\n\nSilakan buka di browser:\n{url}", "Buka Tautan", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show($"Unable to open link: {ex.Message}\n\nPlease open it in your browser:\n{url}", "Open Link", MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
 
@@ -652,7 +662,7 @@ namespace NetToCXSim
                 string json = null;
                 using (var client = new System.Net.WebClient())
                 {
-                    client.Headers.Add("User-Agent", "NetToCxSim-App/0.3.2");
+                    client.Headers.Add("User-Agent", "NetToCxSim-App/0.4.4");
                     client.Encoding = System.Text.Encoding.UTF8;
                     json = await client.DownloadStringTaskAsync(new Uri("https://api.github.com/repos/ismaillowkey/OmronNetToCXSim/releases/latest"));
                 }
@@ -663,17 +673,17 @@ namespace NetToCXSim
                 if (match.Success)
                 {
                     string remoteVerStr = match.Groups[1].Value;
-                    if (Version.TryParse(remoteVerStr, out var remoteVer) && Version.TryParse("0.3.2", out var currentVer))
+                    if (Version.TryParse(remoteVerStr, out var remoteVer) && Version.TryParse("0.4.4", out var currentVer))
                     {
                         if (remoteVer > currentVer)
                         {
-                            Log($"[UPDATE] Versi baru v{remoteVerStr} telah tersedia di GitHub!");
+                            Log($"[UPDATE] New version v{remoteVerStr} is available on GitHub!");
                             var answer = MessageBox.Show(
-                                $"Pembaruan NetToCxSim telah tersedia!\n\n" +
-                                $"• Versi Anda: v{currentVer}\n" +
-                                $"• Versi Terbaru: v{remoteVerStr}\n\n" +
-                                $"Apakah Anda ingin membuka halaman download di GitHub?",
-                                "Pembaruan Tersedia - NetToCxSim",
+                                $"A NetToCxSim update is available!\n\n" +
+                                $"• Your version: v{currentVer}\n" +
+                                $"• Latest version: v{remoteVerStr}\n\n" +
+                                $"Do you want to open the download page on GitHub?",
+                                "Update Available - NetToCxSim",
                                 MessageBoxButton.YesNo,
                                 MessageBoxImage.Information);
 
@@ -689,7 +699,7 @@ namespace NetToCXSim
                 if (isManual)
                 {
                     MessageBox.Show(
-                        "NetToCxSim sudah menggunakan versi terbaru (v0.3.2).\nTidak ada pembaruan yang diperlukan.",
+                        "NetToCxSim is already up to date (v0.4.4).\nNo update is required.",
                         "Check for Updates",
                         MessageBoxButton.OK,
                         MessageBoxImage.Information);
@@ -700,7 +710,7 @@ namespace NetToCXSim
                 if (isManual)
                 {
                     var res = MessageBox.Show(
-                        $"Gagal memeriksa pembaruan: {ex.Message}\n\nApakah Anda ingin membuka halaman rilis GitHub langsung di browser?",
+                        $"Failed to check for updates: {ex.Message}\n\nDo you want to open the GitHub releases page in your browser?",
                         "Check for Updates",
                         MessageBoxButton.YesNo,
                         MessageBoxImage.Warning);
@@ -929,7 +939,7 @@ namespace NetToCXSim
                     Log($"[WATER SENSOR] High Float (CIO 0.03) -> {(floatHigh ? "TRIGGERED (ON)" : "CLEARED (OFF)")}");
                 }
 
-                // Write analog water level to DM 10 (0 - 1000)
+                // Write analog water level to D10 (0 - 1000)
                 _simEngine.WriteWord("D10", (ushort)liter);
             }
         }
@@ -1022,9 +1032,275 @@ namespace NetToCXSim
             }
         }
 
+        #region OPC DA Server Tab Event Handlers
+        private void UpdateOpcServerUI()
+        {
+            if (_opcDaServer == null) return;
+
+            bool running = _opcDaServer.IsRunning;
+            OpcStatusLed.Fill = running ? new SolidColorBrush(Color.FromRgb(16, 185, 129)) : new SolidColorBrush(Color.FromRgb(239, 68, 68));
+            TxtOpcServerStatus.Text = running ? "OPC DA SERVER: RUNNING (AUTO-STARTED)" : "OPC DA SERVER: STOPPED";
+            TxtOpcServerStatus.Foreground = running ? new SolidColorBrush(Color.FromRgb(4, 120, 87)) : new SolidColorBrush(Color.FromRgb(220, 38, 38));
+
+            BtnStartOpcServer.Visibility = running ? Visibility.Collapsed : Visibility.Visible;
+            BtnStopOpcServer.Visibility = running ? Visibility.Visible : Visibility.Collapsed;
+
+            TxtOpcClientsCount.Text = _opcDaServer.ClientCount.ToString();
+            TxtOpcTotalTags.Text = _opcDaServer.Tags.Count.ToString();
+        }
+
+        private void BtnStartOpcServer_Click(object sender, RoutedEventArgs e)
+        {
+            _opcDaServer.StartServer();
+            UpdateOpcServerUI();
+        }
+
+        private void BtnStopOpcServer_Click(object sender, RoutedEventArgs e)
+        {
+            _opcDaServer.StopServer();
+            UpdateOpcServerUI();
+        }
+
+        private void BtnRegisterOpcServer_Click(object sender, RoutedEventArgs e)
+        {
+            string exePath = System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName ?? "";
+            bool isAdmin = new System.Security.Principal.WindowsPrincipal(System.Security.Principal.WindowsIdentity.GetCurrent()).IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
+
+            if (!isAdmin)
+            {
+                try
+                {
+                    // Relaunch self with /regserver as Administrator to register in HKLM
+                    var psi = new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = exePath,
+                        Arguments = "/regserver",
+                        UseShellExecute = true,
+                        Verb = "runas"
+                    };
+                    var p = System.Diagnostics.Process.Start(psi);
+                    p?.WaitForExit();
+
+                    MessageBox.Show($"OPC DA Server was registered successfully in the Windows Registry (HKLM & HKCU)!\n\nProgID: {OpcDaConstants.ProgId}\nCLSID: {{{OpcDaConstants.CLSID_NetToCxSimOpcDa}}}\nCategories: CATID_OPCDAServer20\n\nClients such as OPC Expert, Kepware, AVEVA, and Matrikon can now discover NetToCxSim.OPCServer.DA.",
+                                    "OPC Registration Successful", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Administrator permission is required to register in HKEY_LOCAL_MACHINE:\n{ex.Message}\n\nRun NetToCxSim as Administrator.",
+                                    "OPC Registration Requires Admin", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+            }
+
+            bool ok = OpcRegistryHelper.RegisterServer(exePath, out string error);
+            if (ok)
+            {
+                MessageBox.Show($"OPC DA Server was registered successfully in the Windows Registry!\n\nProgID: {OpcDaConstants.ProgId}\nCLSID: {{{OpcDaConstants.CLSID_NetToCxSimOpcDa}}}\nCategories: CATID_OPCDAServer20\n\nClients such as OPC Expert, Kepware, AVEVA, and Matrikon can now discover NetToCxSim.OPCServer.DA.",
+                                "OPC Registration Successful", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            else
+            {
+                MessageBox.Show($"Failed to register server: {error}\n\nTip: Run the application as Administrator.",
+                                "OPC Registration Failed", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+
+        private void BtnAddOpcTag_Click(object sender, RoutedEventArgs e)
+        {
+            var dlg = new TagEditWindow();
+            dlg.Owner = this;
+            if (dlg.ShowDialog() == true)
+            {
+                _opcDaServer.AddTag(dlg.TagItem);
+                UpdateOpcServerUI();
+                Log($"Tag added: {dlg.TagItem.TagName} -> {dlg.TagItem.Address} ({dlg.TagItem.DataType})");
+            }
+        }
+
+        private void BtnRowEditTag_Click(object sender, RoutedEventArgs e)
+        {
+            var btn = sender as Button;
+            var tag = btn?.Tag as OpcTagItem ?? DgOpcTags.SelectedItem as OpcTagItem;
+            if (tag == null) return;
+
+            var dlg = new TagEditWindow(tag);
+            dlg.Owner = this;
+            if (dlg.ShowDialog() == true)
+            {
+                tag.TagName = dlg.TagItem.TagName;
+                tag.Address = dlg.TagItem.Address;
+                tag.DataType = dlg.TagItem.DataType;
+                tag.Description = dlg.TagItem.Description;
+                tag.IsActive = dlg.TagItem.IsActive;
+
+                _opcDaServer.SaveTags();
+                UpdateOpcServerUI();
+                Log($"Tag updated: {tag.TagName} -> {tag.Address}");
+            }
+        }
+
+        private void BtnRowDeleteTag_Click(object sender, RoutedEventArgs e)
+        {
+            var btn = sender as Button;
+            var tag = btn?.Tag as OpcTagItem ?? DgOpcTags.SelectedItem as OpcTagItem;
+            if (tag == null) return;
+
+            var r = MessageBox.Show($"Are you sure you want to delete tag '{tag.TagName}' ({tag.Address})?", "Confirm Delete Tag", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (r == MessageBoxResult.Yes)
+            {
+                _opcDaServer.RemoveTag(tag);
+                UpdateOpcServerUI();
+                Log($"Tag deleted: {tag.TagName}");
+            }
+        }
+
+        private void BtnEditOpcTag_Click(object sender, RoutedEventArgs e)
+        {
+            BtnRowEditTag_Click(sender, e);
+        }
+
+        private void BtnDeleteOpcTag_Click(object sender, RoutedEventArgs e)
+        {
+            BtnRowDeleteTag_Click(sender, e);
+        }
+
+        private void BtnResetOpcPresets_Click(object sender, RoutedEventArgs e)
+        {
+            var r = MessageBox.Show("Reset the tag list to default presets (CIO 0.00..0.12 and CIO 100.00..100.08)?\nCurrent changes will be overwritten.", "Reset Presets", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (r == MessageBoxResult.Yes)
+            {
+                _opcDaServer.LoadDefaultPresets();
+                UpdateOpcServerUI();
+                Log("Tags reset to default presets (CIO_0_00..CIO_0_12 & CIO_100_00..CIO_100_08).");
+            }
+        }
+
+        private void BtnExportOpcCsv_Click(object sender, RoutedEventArgs e)
+        {
+            var sfd = new Microsoft.Win32.SaveFileDialog
+            {
+                Filter = "CSV File (*.csv)|*.csv",
+                FileName = "NetToCxSim_OpcTags.csv"
+            };
+
+            if (sfd.ShowDialog() == true)
+            {
+                try
+                {
+                    string csv = _opcDaServer.ExportCsv();
+                    File.WriteAllText(sfd.FileName, csv);
+                    MessageBox.Show("Tags exported to CSV successfully!", "Export Successful", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Export failed: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
+        private void BtnImportOpcCsv_Click(object sender, RoutedEventArgs e)
+        {
+            var ofd = new Microsoft.Win32.OpenFileDialog
+            {
+                Filter = "CSV File (*.csv)|*.csv"
+            };
+
+            if (ofd.ShowDialog() == true)
+            {
+                try
+                {
+                    string csv = File.ReadAllText(ofd.FileName);
+                    _opcDaServer.ImportCsv(csv);
+                    UpdateOpcServerUI();
+                    MessageBox.Show("Tags imported from CSV successfully!", "Import Successful", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Import failed: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
+        private void DgOpcTags_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var selected = DgOpcTags.SelectedItem as OpcTagItem;
+            if (selected != null)
+            {
+                TxtOpcSelectedTag.Text = $"{selected.TagName} ({selected.Address}, {selected.DataType})";
+                TxtOpcWriteValue.Text = selected.Value?.ToString() ?? "0";
+            }
+            else
+            {
+                TxtOpcSelectedTag.Text = "None (select a row)";
+            }
+        }
+
+        private void DgOpcTags_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            BtnEditOpcTag_Click(sender, e);
+        }
+
+        private void BtnOpcWrite_Click(object sender, RoutedEventArgs e)
+        {
+            var selected = DgOpcTags.SelectedItem as OpcTagItem;
+            if (selected == null)
+            {
+                MessageBox.Show("Please select a tag from the table first!", "Warning", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            string valStr = TxtOpcWriteValue.Text?.Trim();
+            if (string.IsNullOrEmpty(valStr)) return;
+
+            bool ok = _opcDaServer.WriteTagToPlc(selected, valStr);
+            if (ok)
+            {
+                Log($"[OPC Test Write] Wrote '{valStr}' to tag '{selected.TagName}' ({selected.Address})");
+            }
+            else
+            {
+                MessageBox.Show($"Failed to write to CX-Simulator!\nMake sure CX-Simulator (CxCpuMain.exe) is running and Work Online.", "Write Failed", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+
+        private void BtnOpcToggle_Click(object sender, RoutedEventArgs e)
+        {
+            var selected = DgOpcTags.SelectedItem as OpcTagItem;
+            if (selected == null)
+            {
+                MessageBox.Show("Please select a tag from the table first!", "Warning", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            if (selected.DataType != OpcDataType.Bool)
+            {
+                MessageBox.Show("Toggle only works for Bool tags!", "Warning", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            bool current = false;
+            if (selected.Value is bool b) current = b;
+            else if (bool.TryParse(selected.Value?.ToString(), out bool pb)) current = pb;
+
+            bool next = !current;
+            bool ok = _opcDaServer.WriteTagToPlc(selected, next);
+            if (ok)
+            {
+                TxtOpcWriteValue.Text = next.ToString();
+                Log($"[OPC Test Toggle] Toggled '{selected.TagName}' ({selected.Address}) to {next}");
+            }
+            else
+            {
+                MessageBox.Show("Failed to toggle bit in CX-Simulator!", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+        #endregion
+
         protected override void OnClosed(EventArgs e)
         {
             _pollTimer.Stop();
+            _opcDaServer?.StopServer();
             _finsServer?.Dispose();
             _simEngine.Dispose();
             base.OnClosed(e);

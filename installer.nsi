@@ -1,11 +1,11 @@
 ; ========================================================
 ;  NSIS Installer Script for NetToCxSim
 ;  Author: ismaillowkey
-;  Version: 0.3.2
+;  Version: 0.4.4
 ; ========================================================
 
 !define PRODUCT_NAME "NetToCxSim"
-!define PRODUCT_VERSION "0.3.2"
+!define PRODUCT_VERSION "0.4.4"
 !define PRODUCT_PUBLISHER "ismaillowkey"
 !define PRODUCT_WEB_SITE "https://saweria.co/ismaillowkey"
 !define PRODUCT_EXE "NetToCXSim.exe"
@@ -35,7 +35,7 @@ SetCompressor /SOLID lzma
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
 !define MUI_FINISHPAGE_RUN "$INSTDIR\${PRODUCT_EXE}"
-!define MUI_FINISHPAGE_RUN_TEXT "Jalankan ${PRODUCT_NAME} v${PRODUCT_VERSION}"
+!define MUI_FINISHPAGE_RUN_TEXT "Launch ${PRODUCT_NAME} v${PRODUCT_VERSION}"
 !insertmacro MUI_PAGE_FINISH
 
 ; Uninstaller Pages
@@ -44,7 +44,6 @@ SetCompressor /SOLID lzma
 !insertmacro MUI_UNPAGE_FINISH
 
 ; Language
-!insertmacro MUI_LANGUAGE "Indonesian"
 !insertmacro MUI_LANGUAGE "English"
 
 ; --------------------------------------------------------
@@ -58,7 +57,7 @@ Section "MainSection" SEC01
     ReadRegStr $R0 ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "UninstallString"
     StrCmp $R0 "" skip_old_uninstall
     IfFileExists "$R0" 0 skip_old_uninstall
-        DetailPrint "Menghapus instalasi versi sebelumnya..."
+        DetailPrint "Removing previous installation..."
         ExecWait '"$R0" /S _?=$INSTDIR'
         Delete "$R0"
         Sleep 500
@@ -107,6 +106,40 @@ Section -Post
     WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "URLInfoAbout" "${PRODUCT_WEB_SITE}"
     WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "Publisher" "${PRODUCT_PUBLISHER}"
     WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "InstallLocation" "$INSTDIR"
+
+    ; Register OPC DA Server in 32-bit (WOW6432Node) and 64-bit registry
+    SetRegView 32
+    WriteRegStr HKLM "Software\Classes\NetToCxSim.OPCServer.DA" "" "NetToCxSim Omron CX-Simulator OPC DA Server"
+    WriteRegStr HKLM "Software\Classes\NetToCxSim.OPCServer.DA\CLSID" "" "{B5D2D68C-7975-4B86-B909-64DE9B518F8C}"
+    WriteRegStr HKLM "Software\Classes\NetToCxSim.OPCServer.DA\OPC" "" ""
+    WriteRegStr HKLM "Software\Classes\CLSID\{B5D2D68C-7975-4B86-B909-64DE9B518F8C}" "" "NetToCxSim Omron CX-Simulator OPC DA Server"
+    WriteRegStr HKLM "Software\Classes\CLSID\{B5D2D68C-7975-4B86-B909-64DE9B518F8C}" "AppID" "{B5D2D68C-7975-4B86-B909-64DE9B518F8C}"
+    WriteRegStr HKLM "Software\Classes\CLSID\{B5D2D68C-7975-4B86-B909-64DE9B518F8C}\ProgID" "" "NetToCxSim.OPCServer.DA"
+    WriteRegStr HKLM "Software\Classes\CLSID\{B5D2D68C-7975-4B86-B909-64DE9B518F8C}\LocalServer32" "" '"$INSTDIR\${PRODUCT_EXE}"'
+    WriteRegStr HKLM "Software\Classes\CLSID\{B5D2D68C-7975-4B86-B909-64DE9B518F8C}\Implemented Categories\{63D5F432-CFE4-11d1-B2C8-0060083BA1FB}" "" ""
+    WriteRegStr HKLM "Software\Classes\CLSID\{B5D2D68C-7975-4B86-B909-64DE9B518F8C}\Implemented Categories\{63D5F430-CFE4-11d1-B2C8-0060083BA1FB}" "" ""
+    WriteRegStr HKLM "Software\Classes\CLSID\{B5D2D68C-7975-4B86-B909-64DE9B518F8C}\Implemented Categories\{CC54E38A-DB8C-11d2-AB76-00805F77D1E1}" "" ""
+    WriteRegStr HKLM "Software\Classes\AppID\{B5D2D68C-7975-4B86-B909-64DE9B518F8C}" "" "NetToCxSim Omron CX-Simulator OPC DA Server"
+    WriteRegDWORD HKLM "Software\Classes\AppID\{B5D2D68C-7975-4B86-B909-64DE9B518F8C}" "AuthenticationLevel" 1
+    WriteRegStr HKLM "Software\Classes\AppID\{B5D2D68C-7975-4B86-B909-64DE9B518F8C}" "RunAs" "Interactive User"
+    WriteRegStr HKLM "Software\Classes\AppID\${PRODUCT_EXE}" "AppID" "{B5D2D68C-7975-4B86-B909-64DE9B518F8C}"
+
+    SetRegView 64
+    WriteRegStr HKLM "Software\Classes\NetToCxSim.OPCServer.DA" "" "NetToCxSim Omron CX-Simulator OPC DA Server"
+    WriteRegStr HKLM "Software\Classes\NetToCxSim.OPCServer.DA\CLSID" "" "{B5D2D68C-7975-4B86-B909-64DE9B518F8C}"
+    WriteRegStr HKLM "Software\Classes\NetToCxSim.OPCServer.DA\OPC" "" ""
+    WriteRegStr HKLM "Software\Classes\CLSID\{B5D2D68C-7975-4B86-B909-64DE9B518F8C}" "" "NetToCxSim Omron CX-Simulator OPC DA Server"
+    WriteRegStr HKLM "Software\Classes\CLSID\{B5D2D68C-7975-4B86-B909-64DE9B518F8C}" "AppID" "{B5D2D68C-7975-4B86-B909-64DE9B518F8C}"
+    WriteRegStr HKLM "Software\Classes\CLSID\{B5D2D68C-7975-4B86-B909-64DE9B518F8C}\ProgID" "" "NetToCxSim.OPCServer.DA"
+    WriteRegStr HKLM "Software\Classes\CLSID\{B5D2D68C-7975-4B86-B909-64DE9B518F8C}\LocalServer32" "" '"$INSTDIR\${PRODUCT_EXE}"'
+    WriteRegStr HKLM "Software\Classes\CLSID\{B5D2D68C-7975-4B86-B909-64DE9B518F8C}\Implemented Categories\{63D5F432-CFE4-11d1-B2C8-0060083BA1FB}" "" ""
+    WriteRegStr HKLM "Software\Classes\CLSID\{B5D2D68C-7975-4B86-B909-64DE9B518F8C}\Implemented Categories\{63D5F430-CFE4-11d1-B2C8-0060083BA1FB}" "" ""
+    WriteRegStr HKLM "Software\Classes\CLSID\{B5D2D68C-7975-4B86-B909-64DE9B518F8C}\Implemented Categories\{CC54E38A-DB8C-11d2-AB76-00805F77D1E1}" "" ""
+    WriteRegStr HKLM "Software\Classes\AppID\{B5D2D68C-7975-4B86-B909-64DE9B518F8C}" "" "NetToCxSim Omron CX-Simulator OPC DA Server"
+    WriteRegDWORD HKLM "Software\Classes\AppID\{B5D2D68C-7975-4B86-B909-64DE9B518F8C}" "AuthenticationLevel" 1
+    WriteRegStr HKLM "Software\Classes\AppID\{B5D2D68C-7975-4B86-B909-64DE9B518F8C}" "RunAs" "Interactive User"
+    WriteRegStr HKLM "Software\Classes\AppID\${PRODUCT_EXE}" "AppID" "{B5D2D68C-7975-4B86-B909-64DE9B518F8C}"
+    SetRegView 32
 SectionEnd
 
 ; --------------------------------------------------------
@@ -133,6 +166,19 @@ Section Uninstall
     ; Remove registry keys
     DeleteRegKey ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}"
     DeleteRegKey HKLM "${PRODUCT_DIR_REGKEY}"
+
+    ; Remove OPC DA Server Registry Keys
+    SetRegView 32
+    DeleteRegKey HKLM "Software\Classes\NetToCxSim.OPCServer.DA"
+    DeleteRegKey HKLM "Software\Classes\CLSID\{B5D2D68C-7975-4B86-B909-64DE9B518F8C}"
+    DeleteRegKey HKLM "Software\Classes\AppID\{B5D2D68C-7975-4B86-B909-64DE9B518F8C}"
+    DeleteRegKey HKLM "Software\Classes\AppID\${PRODUCT_EXE}"
+    SetRegView 64
+    DeleteRegKey HKLM "Software\Classes\NetToCxSim.OPCServer.DA"
+    DeleteRegKey HKLM "Software\Classes\CLSID\{B5D2D68C-7975-4B86-B909-64DE9B518F8C}"
+    DeleteRegKey HKLM "Software\Classes\AppID\{B5D2D68C-7975-4B86-B909-64DE9B518F8C}"
+    DeleteRegKey HKLM "Software\Classes\AppID\${PRODUCT_EXE}"
+    SetRegView 32
 
     SetAutoClose true
 SectionEnd

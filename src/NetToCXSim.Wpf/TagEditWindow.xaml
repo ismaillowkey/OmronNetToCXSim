@@ -1,0 +1,89 @@
+<Window x:Class="NetToCXSim.TagEditWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Configure OPC DA Tag"
+        Height="510" Width="470"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="#F8FAFC"
+        FontFamily="Segoe UI, Inter, Arial"
+        Foreground="#0F172A">
+
+    <Window.Resources>
+        <Style x:Key="DialogButton" TargetType="Button">
+            <Setter Property="Background" Value="#2563EB"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="16,8"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#1D4ED8"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,16">
+            <TextBlock x:Name="TxtHeaderTitle" Text="ADD NEW OPC TAG" FontSize="16" FontWeight="Bold" Foreground="#0284C7"/>
+            <TextBlock Text="Map an OPC DA Tag Name to Omron CX-Simulator Memory Address" FontSize="11" Foreground="#64748B" Margin="0,2,0,0"/>
+        </StackPanel>
+
+        <!-- Form Fields -->
+        <Border Grid.Row="1" Background="#FFFFFF" CornerRadius="10" Padding="16" BorderBrush="#E2E8F0" BorderThickness="1">
+            <StackPanel>
+                <!-- Tag Name -->
+                <TextBlock Text="TAG NAME (OPC Item ID)" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4"/>
+                <TextBox x:Name="TxtTagName" Text="MyTag_1" Padding="8,6" Background="#F8FAFC" BorderBrush="#CBD5E1" Margin="0,0,0,12" FontSize="13" FontWeight="SemiBold"/>
+
+                <!-- Address -->
+                <TextBlock Text="CX-SIMULATOR ADDRESS" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4"/>
+                <TextBox x:Name="TxtAddress" Text="0.00" Padding="8,6" Background="#F8FAFC" BorderBrush="#CBD5E1" Margin="0,0,0,2" FontSize="13" FontWeight="Bold" Foreground="#0369A1"/>
+                <TextBlock Text="Examples: 0.00, 100.01, D10, W0.0, H0.0, T0, C0" FontSize="10" Foreground="#94A3B8" Margin="0,0,0,12"/>
+
+                <!-- Data Type -->
+                <TextBlock Text="DATA TYPE" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4"/>
+                <ComboBox x:Name="CmbDataType" Padding="8,6" Margin="0,0,0,12" Background="#F8FAFC" BorderBrush="#CBD5E1">
+                    <ComboBoxItem Content="Bool" IsSelected="True"/>
+                    <ComboBoxItem Content="Int16"/>
+                    <ComboBoxItem Content="UInt16"/>
+                    <ComboBoxItem Content="Int32"/>
+                    <ComboBoxItem Content="UInt32"/>
+                    <ComboBoxItem Content="Float"/>
+                </ComboBox>
+
+                <!-- Description -->
+                <TextBlock Text="DESCRIPTION (OPTIONAL)" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4"/>
+                <TextBox x:Name="TxtDescription" Padding="8,6" Background="#F8FAFC" BorderBrush="#CBD5E1" Margin="0,0,0,12" FontSize="12"/>
+
+                <!-- Active -->
+                <CheckBox x:Name="ChkActive" Content="Tag Active (cyclic scanned)" IsChecked="True" FontWeight="SemiBold" Foreground="#334155"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Buttons -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+            <Button Content="Cancel" IsCancel="True" Style="{StaticResource DialogButton}" Background="#94A3B8" Margin="0,0,8,0" Click="BtnCancel_Click"/>
+            <Button Content="Save Tag" IsDefault="True" Style="{StaticResource DialogButton}" Background="#0284C7" Click="BtnSave_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>

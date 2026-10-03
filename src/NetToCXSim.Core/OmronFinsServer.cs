@@ -88,14 +88,14 @@ namespace NetToCXSim.Services
                     try { testTcp?.Stop(); } catch { }
                     try { testUdp?.Close(); } catch { }
 
-                    Log($"[FINS BRIDGE] Port {testPort} sudah terpakai ({ex.SocketErrorCode}). Mencoba port {testPort + 1}...");
+                    Log($"[FINS BRIDGE] Port {testPort} is already in use ({ex.SocketErrorCode}). Trying port {testPort + 1}...");
                 }
                 catch (Exception ex)
                 {
                     try { testTcp?.Stop(); } catch { }
                     try { testUdp?.Close(); } catch { }
 
-                    Log($"[FINS BRIDGE] Port {testPort} error: {ex.Message}. Mencoba port {testPort + 1}...");
+                    Log($"[FINS BRIDGE] Port {testPort} error: {ex.Message}. Trying port {testPort + 1}...");
                 }
             }
 
@@ -108,7 +108,7 @@ namespace NetToCXSim.Services
             }
             else
             {
-                Log($"[FINS BRIDGE ERROR] Gagal membuka port FINS Server antara {startPort} dan {startPort + maxPortAttempts - 1}.");
+                Log($"[FINS BRIDGE ERROR] Failed to open FINS Server port between {startPort} and {startPort + maxPortAttempts - 1}.");
             }
         }
 
@@ -664,7 +664,7 @@ namespace NetToCXSim.Services
                     isBit = false;
                     return true;
 
-                // Data Register (DR0..DR15) in Omron CS/CJ/CP and Haiwell
+                // Data Register (DR0..DR15) in Omron CS/CJ/CP
                 case 0xBC:
                     area = OmronSimulatorEngine.MemoryArea.DM;
                     actualWord = wordAddr;

@@ -1,7 +1,7 @@
 # NetToCxSim ⚡
 
 > **Omron CX-Simulator Ethernet FINS TCP/UDP Bridge & SCADA Simulator**  
-> *Developed by **ismaillowkey** | Version: **v0.3.2***
+> *Developed by **ismaillowkey** | Version: **v0.4.4***
 
 [![Platform](https://img.shields.io/badge/Platform-Windows%20x86%20%7C%20x64-0078D6.svg)](https://github.com/ismaillowkey/OmronNetToCXSim)
 [![.NET Framework](https://img.shields.io/badge/.NET%20Framework-4.7.2-512BD4.svg)](https://dotnet.microsoft.com)
@@ -22,6 +22,22 @@ Unduh installer setup versi terbaru pada halaman [GitHub Releases](https://githu
 
 > 🔄 **Fitur Auto Update**:  
 > NetToCxSim dilengkapi menu **Check for Update** dan pengecekan pembaruan otomatis di latar belakang saat aplikasi dijalankan.
+
+---
+
+## 🚀 What's New in v0.4.4
+
+- ⚡ **Full MatrikonOPC Explorer Compatibility**: Implemented native COM `IOPCDataCallback` and `IOPCAsyncIO2` interfaces for active group event sinks. Live data changes and `Refresh2` requests now stream in real time with `Good` quality status in MatrikonOPC Explorer and OPC Expert without errors.
+- 🎨 **Crystal-Clear Architecture Diagram**: Optimized WPF text rendering with `TextFormattingMode="Display"` and ClearType hints while eliminating rasterized drop shadows that caused blurry labels. Scaled nodes, icons, and connection arrows for sharp display on any screen resolution.
+- 🔘 **Dynamic Server Button States**: The OPC DA Server Start and Stop buttons now intelligently toggle visibility (Start button is hidden while the server is active; Stop button is hidden when idle).
+- 📐 **Tag Configuration Dialog UX**: Enlarged `TagEditWindow` dimensions to eliminate text clipping on the `DESCRIPTION (OPTIONAL)` label and active status checkbox.
+- 🌐 **Refined Workflow & English Documentation**: Standardized the 5-step operational workflow and connection architecture descriptions in clean, concise English.
+
+---
+
+## 📸 Screenshot
+
+![NetToCxSim Screenshot](Picture/Screenshot.jpg)
 
 ---
 
