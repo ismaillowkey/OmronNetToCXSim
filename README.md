@@ -1,7 +1,7 @@
 # NetToCxSim ⚡
 
 > **Omron CX-Simulator Ethernet FINS TCP/UDP Bridge & SCADA Simulator**  
-> *Developed by **Ismail Lowkey** | Version: **v0.4.6***
+> *Developed by **Ismail Lowkey** | Version: **v0.5.2***
 
 [![Platform](https://img.shields.io/badge/Platform-Windows%20x86%20%7C%20x64-0078D6.svg)](https://github.com/ismaillowkey/OmronNetToCXSim)
 [![.NET Framework](https://img.shields.io/badge/.NET%20Framework-4.7.2-512BD4.svg)](https://dotnet.microsoft.com)
@@ -22,6 +22,16 @@ Unduh installer setup versi terbaru pada halaman [GitHub Releases](https://githu
 
 > 🔄 **Fitur Auto Update**:  
 > NetToCxSim dilengkapi menu **Check for Update** dan pengecekan pembaruan otomatis di latar belakang saat aplikasi dijalankan.
+
+---
+
+## 🚀 What's New in v0.5.2
+
+- 🧠 **Multi-Engine & Accurate PLC CPU Auto-Detection (`CP1` / `CP2E` / `CJ1` / `CJ2` / `CS1` / `CS2`)**: Added automatic detection for both `CxCpuMain.exe` (`CxCpuMisc.dll`) and `CxCpuMainCS2.exe` (`CxCpuMiscCS2.dll`), reading the active downloaded project CPU model directly from `CxOsRoutine*.dll` (`ExSys_cpu_type`) with fallback to `MainExPLCModel` shared memory.
+- 🔍 **Dynamic Memory Pointer Resolution (Build-Independent)**: Replaced hardcoded `0xA184` offset lookup with live PE Export Table resolution via `CpuClearCio` (with safe `0xA184` / `0xC18C` fallbacks), ensuring reliable connection across `CP1E`, `CP1L`, `CP1H`, `CP2E`, `CJ1`, `CJ2`, and `CS1` builds.
+- 🏷️ **Prominent `DETECTED PLC CPU` Badge & FINS `05 01` Response**: Added a bold `DETECTED PLC CPU` header badge and updated FINS Read Controller Data (`05 01`) to report the live detected PLC CPU model.
+- 🎨 **3-Card Top Layout & Cleaner Diagram**: Separated **Workflow CX-Programmer**, **Data Connection Architecture**, and **HMI & SCADA Guide** into 3 distinct cards with wider spacing, removed cluttered subtitle text, and set **`IO (Digital Rack)`** as the default startup tab.
+- 🛠️ **Unified Launcher & Dual-Arch Installer (`run_or_createinstaller.bat`)**: Replaced `create_installer.bat` with an interactive launcher/builder supporting running x86 or building Windows `x86` and `x64` NSIS installers into `publish\`.
 
 ---
 

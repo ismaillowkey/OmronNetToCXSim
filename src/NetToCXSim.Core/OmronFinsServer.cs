@@ -540,12 +540,19 @@ namespace NetToCXSim.Services
             {
                 // Returns 20 bytes controller model + 20 bytes version info
                 byte[] cpuData = new byte[40];
-                byte[] modelBytes = Encoding.ASCII.GetBytes("CJ2M-CPU33          ");
+                string activeModel = "CJ2M-CPU33";
+                if (_simEngine != null && !string.IsNullOrWhiteSpace(_simEngine.DetectedCpuType))
+                {
+                    activeModel = _simEngine.DetectedCpuType;
+                }
+
+                string paddedModel = activeModel.PadRight(20).Substring(0, 20);
+                byte[] modelBytes = Encoding.ASCII.GetBytes(paddedModel);
                 byte[] verBytes = Encoding.ASCII.GetBytes("V2.00               ");
                 Buffer.BlockCopy(modelBytes, 0, cpuData, 0, Math.Min(20, modelBytes.Length));
                 Buffer.BlockCopy(verBytes, 0, cpuData, 20, Math.Min(20, verBytes.Length));
 
-                Log($"[FINS INFO] CPU Model Info queried by {clientEp}");
+                Log($"[FINS INFO] CPU Model Info ({activeModel}) queried by {clientEp}");
                 return BuildSuccessResponse(header, mr, sr, cpuData);
             }
             // 5. Default / Unsupported Command handler

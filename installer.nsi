@@ -5,8 +5,12 @@
 
 !define PRODUCT_EXE "NetToCXSim.exe"
 
+!ifndef TARGET_ARCH
+    !define TARGET_ARCH "x86"
+!endif
+
 ; Auto-read version from compiled executable
-!getdllversion "publish_x86\${PRODUCT_EXE}" expv_
+!getdllversion "src\NetToCXSim.Wpf\obj\publish_x86\${PRODUCT_EXE}" expv_
 !define PRODUCT_VERSION "${expv_1}.${expv_2}.${expv_3}"
 
 !define PRODUCT_NAME "NetToCxSim"
@@ -21,9 +25,14 @@
 !include "MUI2.nsh"
 
 ; General Settings
-Name "${PRODUCT_NAME} v${PRODUCT_VERSION}"
-OutFile "SetupNetToCxSim_v${PRODUCT_VERSION}.exe"
-InstallDir "$PROGRAMFILES\NetToCxSim"
+Name "${PRODUCT_NAME} v${PRODUCT_VERSION} (${TARGET_ARCH})"
+!if "${TARGET_ARCH}" == "x64"
+    OutFile "publish\SetupNetToCxSim_v${PRODUCT_VERSION}_x64.exe"
+    InstallDir "$PROGRAMFILES64\NetToCxSim"
+!else
+    OutFile "publish\SetupNetToCxSim_v${PRODUCT_VERSION}_x86.exe"
+    InstallDir "$PROGRAMFILES\NetToCxSim"
+!endif
 InstallDirRegKey HKLM "${PRODUCT_DIR_REGKEY}" ""
 RequestExecutionLevel admin
 SetCompressor /SOLID lzma
@@ -84,9 +93,9 @@ Section "MainSection" SEC01
     Delete "$INSTDIR\uninst.exe"
 
     ; Copy published files
-    File "publish_x86\NetToCXSim.exe"
-    File "publish_x86\NetToCXSim.exe.config"
-    File "publish_x86\NetToCXSim.Core.dll"
+    File "src\NetToCXSim.Wpf\obj\publish_x86\NetToCXSim.exe"
+    File "src\NetToCXSim.Wpf\obj\publish_x86\NetToCXSim.exe.config"
+    File "src\NetToCXSim.Wpf\obj\publish_x86\NetToCXSim.Core.dll"
     File "app.ico"
 
     ; Create Desktop Shortcut

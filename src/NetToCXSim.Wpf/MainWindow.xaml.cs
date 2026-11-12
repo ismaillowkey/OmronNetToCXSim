@@ -81,9 +81,9 @@ namespace NetToCXSim
             }
             catch { }
 
-            if (MainTabControl != null && TabOpcDaServer != null)
+            if (MainTabControl != null)
             {
-                MainTabControl.SelectedItem = TabOpcDaServer;
+                MainTabControl.SelectedIndex = 0;
             }
 
             _pollTimer = new DispatcherTimer
@@ -351,18 +351,24 @@ namespace NetToCXSim
 
                 if (isRunning)
                 {
+                    string procName = string.IsNullOrEmpty(_simEngine.ProcessPath) ? "CxCpuMain.exe" : _simEngine.ProcessPath;
+                    string cpuModel = string.IsNullOrEmpty(_simEngine.DetectedCpuType) ? "CX-Simulator CPU" : _simEngine.DetectedCpuType;
+
                     if (!_wasRunning)
                     {
-                        Log($"[SIMULATOR ONLINE] Connected to CxCpuMain.exe (PID: {_simEngine.ProcessId})");
+                        Log($"[SIMULATOR ONLINE] Connected to {procName} (PID: {_simEngine.ProcessId}) | CPU: {cpuModel}");
                         _wasRunning = true;
                     }
+
+                    CpuBadgeBorder.Visibility = Visibility.Visible;
+                    TxtDetectedCpu.Text = cpuModel;
 
                     StatusDot.Fill = new SolidColorBrush(Color.FromRgb(16, 185, 129));
                     StatusDotGlow.Color = Color.FromRgb(16, 185, 129);
                     StatusDotGlow.Opacity = 0.9;
                     StatusText.Text = "CX-SIMULATOR RUNNING";
                     StatusText.Foreground = new SolidColorBrush(Color.FromRgb(5, 150, 105));
-                    StatusDetail.Text = $"CxCpuMain.exe Active (PID: {_simEngine.ProcessId})";
+                    StatusDetail.Text = $"{procName} Active (PID: {_simEngine.ProcessId})";
 
                     // Update FINS Server status
                     int clientCount = _finsServer?.ClientCount ?? 0;
@@ -441,16 +447,19 @@ namespace NetToCXSim
                 {
                     if (_wasRunning)
                     {
-                        Log("[SIMULATOR OFFLINE] Disconnected from CxCpuMain.exe");
+                        Log("[SIMULATOR OFFLINE] Disconnected from CX-Simulator");
                         _wasRunning = false;
                     }
+
+                    CpuBadgeBorder.Visibility = Visibility.Collapsed;
+                    TxtDetectedCpu.Text = "--";
 
                     StatusDot.Fill = new SolidColorBrush(Color.FromRgb(239, 68, 68));
                     StatusDotGlow.Color = Color.FromRgb(239, 68, 68);
                     StatusDotGlow.Opacity = 0.5;
                     StatusText.Text = "CX-SIMULATOR OFFLINE";
                     StatusText.Foreground = new SolidColorBrush(Color.FromRgb(220, 38, 38));
-                    StatusDetail.Text = "Waiting for CxCpuMain.exe to start...";
+                    StatusDetail.Text = "Waiting for CxCpuMain / CxCpuMainCS2...";
 
                     TxtInputWordHex.Text = "Word CIO 0: --";
                     TxtOutputWordHex.Text = "Word CIO 100: --";
@@ -600,6 +609,116 @@ namespace NetToCXSim
                 "• T / C (Timer/Counter): T0 (Timer PV), C0 (Counter PV)";
 
             MessageBox.Show(mapping, "Register Address Reference", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        private void MenuChangelog_Click(object sender, RoutedEventArgs e)
+        {
+            string changelog =
+                "v0.5.2 (Current)\n" +
+                "• Multi-Engine & Accurate PLC CPU Auto-Detection (CP1 / CP2E / CJ1 / CJ2 / CS1 / CS2) via CxOsRoutine*.dll (ExSys_cpu_type) and MainExPLCModel shared memory\n" +
+                "• Dynamic PE Export Table memory pointer resolution via CpuClearCio (with 0xA184 / 0xC18C fallbacks)\n" +
+                "• Prominent DETECTED PLC CPU header badge & live FINS 05 01 controller model response\n" +
+                "• 3-Card top layout with wider spacing, cleaner diagram, and default IO (Digital Rack) startup tab\n" +
+                "• Unified run_or_createinstaller.bat for x86 launch and x86 / x64 NSIS installer builds\n\n" +
+                "v0.4.6 (2026-10-03)\n" +
+                "• Added OPC DA Classic Server (tested with Kepware, Matrikon, OPC Expert, InduSoft, Factory I/O)\n" +
+                "• KEPServerEX tag generation & browse fix (IOPCItemMgt.ValidateItems & ChangeBrowsePosition)\n" +
+                "• Single Source of Truth (SSOT) versioning in Directory.Build.props & standardized publisher\n\n" +
+                "v0.4.5\n" +
+                "• Universal Flat Address Space (OPC_NS_FLAT) & Kepware Select Import Items / Quick Client fixes\n" +
+                "• OPC Client Lifecycle Notice Banner in OPC DA Server tab\n\n" +
+                "v0.4.4\n" +
+                "• Full MatrikonOPC Explorer compatibility (IOPCDataCallback & IOPCAsyncIO2)\n" +
+                "• Crystal-clear architecture diagram, dynamic OPC server buttons, and TagEditWindow UX\n\n" +
+                "v0.3.2 (2026-09-21)\n" +
+                "• Single-Instance Enforcement (Mutex) to prevent FINS port conflicts\n" +
+                "• Added My Apps navigation menu & standardized documentation/UI\n\n" +
+                "v0.3.1 (2026-09-17)\n" +
+                "• Maintenance & build updates\n\n" +
+                "v0.3.0 (2026-09-17)\n" +
+                "• Initial FINS TCP/UDP Bridge (Port 9600), Digital Rack I/O, and Filling Water Tank Simulator";
+
+            Window win = new Window
+            {
+                Title = $"NetToCxSim {AppVersionInfo.VersionString} — Changelog",
+                Width = 640,
+                Height = 500,
+                Owner = this,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                ResizeMode = ResizeMode.CanResize,
+                Background = new SolidColorBrush(Color.FromRgb(248, 250, 252))
+            };
+
+            Grid root = new Grid { Margin = new Thickness(16) };
+            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            root.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+            TextBlock header = new TextBlock
+            {
+                Text = $"📜 NetToCxSim Release Changelog (Current: {AppVersionInfo.VersionString})",
+                FontSize = 15,
+                FontWeight = FontWeights.Bold,
+                Foreground = new SolidColorBrush(Color.FromRgb(15, 23, 42)),
+                Margin = new Thickness(0, 0, 0, 10)
+            };
+            Grid.SetRow(header, 0);
+            root.Children.Add(header);
+
+            TextBox body = new TextBox
+            {
+                Text = changelog,
+                IsReadOnly = true,
+                TextWrapping = TextWrapping.Wrap,
+                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                FontFamily = new FontFamily("Segoe UI"),
+                FontSize = 12.5,
+                Padding = new Thickness(12),
+                Background = Brushes.White,
+                BorderBrush = new SolidColorBrush(Color.FromRgb(203, 213, 225)),
+                BorderThickness = new Thickness(1)
+            };
+            Grid.SetRow(body, 1);
+            root.Children.Add(body);
+
+            StackPanel footer = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                HorizontalAlignment = HorizontalAlignment.Right,
+                Margin = new Thickness(0, 12, 0, 0)
+            };
+
+            Button btnReleases = new Button
+            {
+                Content = "Open GitHub Releases",
+                Padding = new Thickness(12, 6, 12, 6),
+                Margin = new Thickness(0, 0, 8, 0),
+                Cursor = System.Windows.Input.Cursors.Hand
+            };
+            btnReleases.Click += (s, args) =>
+            {
+                OpenExternalLink("https://github.com/ismaillowkey/OmronNetToCXSim/releases");
+            };
+
+            Button btnClose = new Button
+            {
+                Content = "Close",
+                Padding = new Thickness(16, 6, 16, 6),
+                IsDefault = true,
+                Cursor = System.Windows.Input.Cursors.Hand
+            };
+            btnClose.Click += (s, args) =>
+            {
+                win.Close();
+            };
+
+            footer.Children.Add(btnReleases);
+            footer.Children.Add(btnClose);
+            Grid.SetRow(footer, 2);
+            root.Children.Add(footer);
+
+            win.Content = root;
+            win.ShowDialog();
         }
 
         private void MenuAbout_Click(object sender, RoutedEventArgs e)
