@@ -1,12 +1,12 @@
 # NetToCxSim ⚡
 
-> **Omron CX-Simulator Ethernet FINS TCP/UDP Bridge & SCADA Simulator**  
-> *Developed by **Ismail Lowkey** | Version: **v0.5.2***
+> **Omron CX-Simulator Ethernet FINS TCP Bridge & SCADA Simulator**  
+> *Developed by **Ismail Lowkey** | Version: **v0.6.2***
 
 [![Platform](https://img.shields.io/badge/Platform-Windows%20x86%20%7C%20x64-0078D6.svg)](https://github.com/ismaillowkey/OmronNetToCXSim)
 [![.NET Framework](https://img.shields.io/badge/.NET%20Framework-4.7.2-512BD4.svg)](https://dotnet.microsoft.com)
 [![Target](https://img.shields.io/badge/Target-Omron%20CX--Simulator-C4151C.svg)](https://www.ia.omron.com)
-[![Protocol](https://img.shields.io/badge/Protocol-Omron%20FINS%20(TCP%2FUDP)-4C1.svg)](https://www.ia.omron.com)
+[![Protocol](https://img.shields.io/badge/Protocol-Omron%20FINS%20TCP-4C1.svg)](https://www.ia.omron.com)
 [![License](https://img.shields.io/badge/License-MIT-555555.svg)](https://github.com/ismaillowkey/OmronNetToCXSim/blob/main/LICENSE)
 [![Support](https://img.shields.io/badge/Support-Saweria-yellow.svg)](https://saweria.co/ismaillowkey)
 
@@ -22,6 +22,28 @@ Unduh installer setup versi terbaru pada halaman [GitHub Releases](https://githu
 
 > 🔄 **Fitur Auto Update**:  
 > NetToCxSim dilengkapi menu **Check for Update** dan pengecekan pembaruan otomatis di latar belakang saat aplikasi dijalankan.
+
+---
+
+## 🚀 What's New in v0.6.2
+
+- 🌐 **Configurable FINS TCP Server & Port Controls**: Added dedicated Numeric Up/Down spinner controls (`TxtFinsPort`, `BtnFinsPortUp`, `BtnFinsPortDown`) in the header card for interactive FINS port adjustments (`1024` - `65535`).
+- ⚡ **Proactive Port Collision Detection & Auto-Shift**: Automatically detects if the target TCP port is in use by another Windows process/application. If occupied, it automatically shifts up (`+1`, `+2`...) to the next available free port and restarts the FINS TCP Server seamlessly with clear log feedback.
+- 🧹 **Pure FINS TCP Engine**: Completely eliminated redundant UDP listener components and labels to avoid port conflicts with host Omron services on UDP port 9600.
+- 📁 **Dedicated Example Programs Shortcut**: Added a top menu button `📁 Example Program HMI` that immediately opens `C:\Users\Public\NetToCxSim\Example Program` in Windows File Explorer (with self-copy fallback for developer environments).
+- ⏹️ **Water Tank Simulation Control**: Added an interactive Start/Stop button for the water tank simulator with complete visual graying and calculation suspension when stopped.
+- 📦 **Consolidated Publish Pipeline**: All published binaries and NSIS installers are now unified directly in `publish\`, removing legacy `publish_x86`.
+- 💬 **Google Form Feedback & Bug Reports**: Integrated direct feedback and bug submission link (`https://forms.gle/s6PBT3iJutDyGaXj7`).
+
+---
+
+## 🚀 What's New in v0.6.1
+
+- 🌐 **Modern OPC UA Server (opc.tcp)**: Added high-performance OPC UA Server (`opc.tcp://localhost:48400/nettocxsim`) alongside the existing OPC DA Classic COM server. Works out-of-the-box with UaExpert, Ignition, Node-RED, Kepware, Weintek HMI, and modern IoT gateways.
+- ⚡ **Dynamic Port Collision Resolution**: Proactively tests TCP port availability and automatically shifts to the next available port (`48401`, `48402`, etc.) if port `48400` is occupied, showing an informative status notice in the UI without crashing.
+- 🔄 **Bidirectional Tag Mirroring**: Directly mirrors the Central Tag Engine (`OpcDaServerEngine`). Reading tags from Omron CX-Simulator memory automatically updates OPC UA node states (`ns=2;s=NetToCXSim.*`), and writes from OPC UA clients are instantaneously forwarded to PLC memory.
+- 🔒 **Machine-Wide Persistent X.509 Certificate**: Implemented dual-storage and cross-mirroring between `%ProgramData%\NetToCXSim\pki` and the **Windows Certificate Store** (`CurrentUser\My`). The server's identity, thumbprint, and private key remain 100% identical even after uninstalling and reinstalling the application repeatedly on the same computer.
+- 🖥️ **Dedicated OPC UA Server UI Tab**: Featuring live server state LED, active session counter, interactive port spinner controls, and a synchronized real-time tag monitor.
 
 ---
 
@@ -77,9 +99,9 @@ Unduh installer setup versi terbaru pada halaman [GitHub Releases](https://githu
 # 🇮🇩 Panduan Bahasa Indonesia
 
 ### 📌 Tentang NetToCxSim
-**NetToCxSim** adalah aplikasi bridge jembatan jaringan ringan (32-bit) yang menghubungkan **Omron CX-Simulator (`CxCpuMain.exe`)** langsung ke jaringan Ethernet nyata melalui protokol standar **Omron FINS (TCP & UDP port 9600)**.
+**NetToCxSim** adalah aplikasi bridge jembatan jaringan ringan (32-bit) yang menghubungkan **Omron CX-Simulator (`CxCpuMain.exe`)** langsung ke jaringan Ethernet nyata melalui protokol standar **Omron FINS TCP (port default 9600)**.
 
-Dengan NetToCxSim, Anda dapat mensimulasikan dan menguji komunikasi antara ladder program di **CX-Programmer** dengan perangkat lunak luar seperti **HMI (EasyBuilder Pro, Haiwell)**, **SCADA (Ignition, Kepware, Wonderware)**, **Node-RED**, **Python**, atau script **C#** secara **100% virtual tanpa PLC fisik ataupun modul hardware Ethernet**.
+Dengan NetToCxSim, Anda dapat mensimulasikan dan menguji komunikasi antara ladder program di **CX-Programmer** dengan perangkat lunak luar seperti **HMI (EasyBuilder Pro)**, **SCADA (Ignition, Kepware, Wonderware)**, **Node-RED**, **Python**, atau script **C#** secara **100% virtual tanpa PLC fisik ataupun modul hardware Ethernet**.
 
 ---
 
@@ -88,12 +110,13 @@ Dengan NetToCxSim, Anda dapat mensimulasikan dan menguji komunikasi antara ladde
    - Membaca dan menulis secara instan ke memory proses `CxCpuMain.exe` (CX-Simulator) dengan latensi sub-milidetik.
    - Mendukung area memori PLC lengkap: **CIO**, **Work (W)**, **Holding (H)**, **Data Memory (DM / D)**, **Auxiliary (A)**, **Timer (T)**, dan **Counter (C)**.
 
-2. **FINS TCP & UDP Server (Port :9600)**:
+2. **FINS TCP Server (Port Default :9600, Configurable)**:
+   - Mendukung pengaturan port secara langsung lewat UI Numeric Up/Down.
    - Mendukung standar FINS Command:
      - `01 01` : Memory Area Read (Bit & Word)
      - `01 02` : Memory Area Write (Bit & Word)
    - Multi-client concurrency (bisa dihubungkan ke HMI, SCADA, dan logger sekaligus).
-   - **Port Auto-Fallback**: Jika port 9600 sedang digunakan, otomatis mencoba port 9601, 9602, dst.
+   - **Port Auto-Fallback**: Jika port default sedang digunakan, otomatis mencoba port berikutnya.
 
 3. **OPC DA 2.05a & 1.0a Classic Server**:
    - Server COM bawaan (zero-dependency) dengan workstation manajemen tag ala Kepware.
@@ -126,7 +149,7 @@ Dengan NetToCxSim, Anda dapat mensimulasikan dan menguji komunikasi antara ladde
 └────────┬────────┘
          │  ◄═══ Direct RAM / Shared Memory (CIO, W, DM, H) ═══►
 ┌────────┴────────┐
-│   NetToCxSim    │ (FINS TCP/UDP Bridge Hub :9600)
+│   NetToCxSim    │ (FINS TCP Bridge Hub :9600)
 └────────┬────────┘
          │  ◄═══ FINS Ethernet LAN / Localhost (Node 1 ⇄ Node 10) ═══►
 ┌────────┴────────┐
@@ -152,7 +175,7 @@ Dengan NetToCxSim, Anda dapat mensimulasikan dan menguji komunikasi antara ladde
 | Parameter | Pengaturan Rekomendasi |
 | :--- | :--- |
 | **Device Type / Driver** | Omron **CP1L/H**, **CP1E**, atau **CJ/CS** |
-| **Protokol** | **FINS (TCP atau UDP)** |
+| **Protokol** | **FINS TCP** |
 | **IP Address** | `127.0.0.1` (jika di komputer yang sama) atau IP LAN komputer |
 | **Port** | `9600` *(atau sesuaikan jika fallback ke 9601/9602)* |
 | **PLC Node ID** | `1` |
@@ -176,7 +199,7 @@ cd OmronNetToCXSim
 dotnet build NetToCXSim.sln -c Release
 
 # Publish 32-bit x86 Release
-dotnet publish src/NetToCXSim.Wpf/NetToCXSim.Wpf.csproj -c Release -r win-x86 --self-contained false -o ./publish_x86
+dotnet publish src/NetToCXSim.Wpf/NetToCXSim.Wpf.csproj -c Release -r win-x86 --self-contained false -o ./publish
 
 # Atau buat installer otomatis:
 create_installer.bat
@@ -200,7 +223,7 @@ Pre-compiled executable files can be downloaded directly from [**GitHub Releases
 ---
 
 ### 📌 About NetToCxSim
-**NetToCxSim** is a lightweight, 32-bit network bridge utility that seamlessly connects **Omron CX-Simulator (`CxCpuMain.exe`)** to real Ethernet networks using the standard **Omron FINS protocol (TCP & UDP port 9600)**.
+**NetToCxSim** is a lightweight, 32-bit network bridge utility that seamlessly connects **Omron CX-Simulator (`CxCpuMain.exe`)** to real Ethernet networks using the standard **Omron FINS TCP protocol (default port 9600)**.
 
 It allows automation engineers, students, and developers to test communication between ladder diagrams running in **CX-Programmer** and external systems such as **HMI (Weintek EasyBuilder Pro, Haiwell)**, **SCADA (Ignition, Kepware, Wonderware)**, **Node-RED**, **Python**, or custom **C#** applications **100% virtually without requiring physical PLC hardware or Ethernet modules**.
 
@@ -211,7 +234,8 @@ It allows automation engineers, students, and developers to test communication b
    - Real-time sub-millisecond read/write access to the virtual PLC memory of `CxCpuMain.exe`.
    - Full support for all Omron memory areas: **CIO**, **Work (W)**, **Holding (H)**, **Data Memory (DM/D)**, **Auxiliary (A)**, **Timers (T)**, and **Counters (C)**.
 
-2. **FINS TCP & UDP Server (Port 9600)**:
+2. **FINS TCP Server (Port 9600, Configurable)**:
+   - Configurable port setting directly from the UI with Numeric Up/Down controls.
    - Compliant with standard FINS Commands:
      - `01 01` : Memory Area Read (Bit & Word)
      - `01 02` : Memory Area Write (Bit & Word)
@@ -249,7 +273,7 @@ It allows automation engineers, students, and developers to test communication b
 └────────┬────────┘
          │  ◄═══ Direct RAM / Shared Memory Scan (CIO, W, DM, H) ═══►
 ┌────────┴────────┐
-│   NetToCxSim    │ (FINS TCP/UDP Bridge Hub :9600)
+│   NetToCxSim    │ (FINS TCP Bridge Hub :9600)
 └────────┬────────┘
          │  ◄═══ FINS Ethernet LAN / Localhost (Node 1 ⇄ Node 10) ═══►
 ┌────────┴────────┐
@@ -275,7 +299,7 @@ It allows automation engineers, students, and developers to test communication b
 | Parameter | Recommended Setting |
 | :--- | :--- |
 | **Device / Driver** | Omron **CP1L/H**, **CP1E**, or **CJ/CS** |
-| **Protocol** | **FINS (TCP or UDP)** |
+| **Protocol** | **FINS TCP** |
 | **IP Address** | `127.0.0.1` (localhost) or host machine LAN IP |
 | **Port** | `9600` *(or fallback port if 9600 is taken)* |
 | **PLC Node ID** | `1` |
@@ -299,7 +323,7 @@ cd OmronNetToCXSim
 dotnet build NetToCXSim.sln -c Release
 
 # Publish 32-bit x86 Release
-dotnet publish src/NetToCXSim.Wpf/NetToCXSim.Wpf.csproj -c Release -r win-x86 --self-contained false -o ./publish_x86
+dotnet publish src/NetToCXSim.Wpf/NetToCXSim.Wpf.csproj -c Release -r win-x86 --self-contained false -o ./publish
 
 # Or build the setup installer:
 create_installer.bat

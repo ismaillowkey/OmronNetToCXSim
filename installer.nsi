@@ -9,8 +9,12 @@
     !define TARGET_ARCH "x86"
 !endif
 
+!ifndef STAGING_DIR
+    !define STAGING_DIR "src\NetToCXSim.Wpf\obj\publish_staging"
+!endif
+
 ; Auto-read version from compiled executable
-!getdllversion "src\NetToCXSim.Wpf\obj\publish_x86\${PRODUCT_EXE}" expv_
+!getdllversion "${STAGING_DIR}\${PRODUCT_EXE}" expv_
 !define PRODUCT_VERSION "${expv_1}.${expv_2}.${expv_3}"
 
 !define PRODUCT_NAME "NetToCxSim"
@@ -23,6 +27,7 @@
 
 ; Modern UI
 !include "MUI2.nsh"
+!include "LogicLib.nsh"
 
 ; General Settings
 Name "${PRODUCT_NAME} v${PRODUCT_VERSION} (${TARGET_ARCH})"
@@ -93,10 +98,19 @@ Section "MainSection" SEC01
     Delete "$INSTDIR\uninst.exe"
 
     ; Copy published files
-    File "src\NetToCXSim.Wpf\obj\publish_x86\NetToCXSim.exe"
-    File "src\NetToCXSim.Wpf\obj\publish_x86\NetToCXSim.exe.config"
-    File "src\NetToCXSim.Wpf\obj\publish_x86\NetToCXSim.Core.dll"
+    File /r "${STAGING_DIR}\*.*"
     File "app.ico"
+
+    ; Copy Example Program to C:\Users\Public\NetToCxSim\Example Program
+    ReadEnvStr $R3 "PUBLIC"
+    ${If} $R3 == ""
+        StrCpy $R3 "C:\Users\Public"
+    ${EndIf}
+    StrCpy $R3 "$R3\NetToCxSim\Example Program"
+    CreateDirectory "$R3"
+    SetOutPath "$R3"
+    File /r "Example PLC and HMI\*.*"
+    SetOutPath "$INSTDIR"
 
     ; Create Desktop Shortcut
     CreateShortCut "$DESKTOP\${PRODUCT_NAME}.lnk" "$INSTDIR\${PRODUCT_EXE}" "" "$INSTDIR\app.ico" 0
@@ -104,6 +118,7 @@ Section "MainSection" SEC01
     ; Create Start Menu Shortcuts
     CreateDirectory "$SMPROGRAMS\${STARTMENU_FOLDER}"
     CreateShortCut "$SMPROGRAMS\${STARTMENU_FOLDER}\${PRODUCT_NAME}.lnk" "$INSTDIR\${PRODUCT_EXE}" "" "$INSTDIR\app.ico" 0
+    CreateShortCut "$SMPROGRAMS\${STARTMENU_FOLDER}\Example Programs.lnk" "$R3"
     CreateShortCut "$SMPROGRAMS\${STARTMENU_FOLDER}\Uninstall ${PRODUCT_NAME}.lnk" "$INSTDIR\uninst.exe" "" "$INSTDIR\uninst.exe" 0
 SectionEnd
 
@@ -170,19 +185,29 @@ Section Uninstall
     ; Remove shortcuts
     Delete "$DESKTOP\${PRODUCT_NAME}.lnk"
     Delete "$SMPROGRAMS\${STARTMENU_FOLDER}\${PRODUCT_NAME}.lnk"
+    Delete "$SMPROGRAMS\${STARTMENU_FOLDER}\Example Programs.lnk"
     Delete "$SMPROGRAMS\${STARTMENU_FOLDER}\Uninstall ${PRODUCT_NAME}.lnk"
     Delete "$SMPROGRAMS\${STARTMENU_FOLDER}\Support & Donate (Saweria).lnk"
     RMDir "$SMPROGRAMS\${STARTMENU_FOLDER}"
 
     ; Remove installed files
+    Delete "$INSTDIR\*.dll"
+    Delete "$INSTDIR\*.pdb"
     Delete "$INSTDIR\NetToCXSim.exe"
     Delete "$INSTDIR\NetToCXSim.exe.config"
-    Delete "$INSTDIR\NetToCXSim.Core.dll"
     Delete "$INSTDIR\app.ico"
     Delete "$INSTDIR\Saweria Donate.url"
     Delete "$INSTDIR\uninst.exe"
 
     RMDir "$INSTDIR"
+
+    ; Remove Example Program from Public directory
+    ReadEnvStr $R3 "PUBLIC"
+    ${If} $R3 == ""
+        StrCpy $R3 "C:\Users\Public"
+    ${EndIf}
+    RMDir /r "$R3\NetToCxSim\Example Program"
+    RMDir "$R3\NetToCxSim"
 
     ; Remove registry keys
     DeleteRegKey ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}"

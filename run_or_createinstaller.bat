@@ -55,14 +55,18 @@ echo   NetToCxSim NSIS Installer Builder (%TARGET_ARCH%)
 echo   Output: publish\SetupNetToCxSim_v*_%TARGET_ARCH%.exe
 echo =======================================================
 echo.
-echo [INFO] Building and publishing x86 Release engine...
+set "STAGING_DIR=src\NetToCXSim.Wpf\obj\publish_staging"
+if exist "%STAGING_DIR%" rmdir /s /q "%STAGING_DIR%"
+if not exist "publish" mkdir "publish"
+
+echo [1/3] Building and publishing Release engine to staging folder...
 echo.
-dotnet publish src\NetToCXSim.Wpf\NetToCXSim.Wpf.csproj -c Release -r win-x86 --self-contained false -o ./src/NetToCXSim.Wpf/obj/publish_x86
+dotnet publish src\NetToCXSim.Wpf\NetToCXSim.Wpf.csproj -c Release -r win-x86 --self-contained false -o "%STAGING_DIR%"
 if %ERRORLEVEL% NEQ 0 goto :PUBLISH_FAILED
 
-if not exist "src\NetToCXSim.Wpf\obj\publish_x86\NetToCXSim.exe" goto :MISSING_EXE
+if not exist "%STAGING_DIR%\NetToCXSim.exe" goto :MISSING_EXE
 echo.
-echo [INFO] Build ready.
+echo [INFO] Staging build ready.
 echo.
 
 set "MAKENSIS="
@@ -77,16 +81,15 @@ if %ERRORLEVEL% EQU 0 set "MAKENSIS=makensis"
 :FOUND_NSIS
 if not defined MAKENSIS goto :MISSING_NSIS
 
-if not exist "publish" mkdir "publish"
-
-echo [INFO] Using NSIS compiler: "%MAKENSIS%"
-echo [INFO] Compiling installer.nsi for %TARGET_ARCH%...
+echo [2/3] Using NSIS compiler: "%MAKENSIS%"
+echo [3/3] Compiling installer.nsi for %TARGET_ARCH%...
 echo.
 
-"%MAKENSIS%" /DTARGET_ARCH=%TARGET_ARCH% installer.nsi
+"%MAKENSIS%" /DTARGET_ARCH=%TARGET_ARCH% /DSTAGING_DIR="%STAGING_DIR%" installer.nsi
 if %ERRORLEVEL% NEQ 0 goto :NSIS_FAILED
 
-if exist "src\NetToCXSim.Wpf\obj\publish_x86" rmdir /s /q "src\NetToCXSim.Wpf\obj\publish_x86"
+:: Clean up staging directory after successful NSIS compile
+if exist "%STAGING_DIR%" rmdir /s /q "%STAGING_DIR%"
 
 echo.
 echo =======================================================
@@ -116,12 +119,11 @@ goto :END_ERR
 :MISSING_EXE
 echo.
 echo =======================================================
-echo  [ERROR] NetToCXSim.exe was not found after publish!
+echo  [ERROR] NetToCXSim.exe was not found in publish folder!
 echo =======================================================
 goto :END_ERR
 
 :MISSING_NSIS
-if exist "src\NetToCXSim.Wpf\obj\publish_x86" rmdir /s /q "src\NetToCXSim.Wpf\obj\publish_x86"
 echo.
 echo =======================================================
 echo  [ERROR] NSIS makensis.exe was not found!
@@ -130,7 +132,6 @@ echo =======================================================
 goto :END_ERR
 
 :NSIS_FAILED
-if exist "src\NetToCXSim.Wpf\obj\publish_x86" rmdir /s /q "src\NetToCXSim.Wpf\obj\publish_x86"
 echo.
 echo =======================================================
 echo  [ERROR] NSIS compilation failed with code %ERRORLEVEL%!

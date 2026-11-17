@@ -101,62 +101,72 @@
             </Setter>
         </Style>
 
-        <!-- Modern Tab Control & Item Styles -->
+        <!-- Modern TabItem Style with Seamless Border -->
         <Style x:Key="ModernTabItem" TargetType="TabItem">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="#64748B"/>
-            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="#475569"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Padding" Value="16,8"/>
-            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="12"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TabItem">
-                        <Border x:Name="tabBorder" Background="{TemplateBinding Background}" CornerRadius="8,8,0,0" Padding="{TemplateBinding Padding}" Margin="0,0,6,0" BorderThickness="0,0,0,3" BorderBrush="Transparent">
-                            <ContentPresenter x:Name="tabContent" ContentSource="Header" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Border x:Name="tabBorder" 
+                                Background="#E2E8F0" 
+                                CornerRadius="8,8,0,0" 
+                                Padding="16,8" 
+                                Margin="0,0,4,0" 
+                                BorderBrush="#94A3B8" 
+                                BorderThickness="1.5,1.5,1.5,1.5">
+                            <ContentPresenter ContentSource="Header" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsSelected" Value="True">
                                 <Setter TargetName="tabBorder" Property="Background" Value="#FFFFFF"/>
                                 <Setter TargetName="tabBorder" Property="BorderBrush" Value="#0284C7"/>
+                                <Setter TargetName="tabBorder" Property="BorderThickness" Value="1.5,3,1.5,0"/>
+                                <Setter TargetName="tabBorder" Property="Margin" Value="0,0,4,-1"/>
+                                <Setter TargetName="tabBorder" Property="Padding" Value="16,9,16,9"/>
                                 <Setter Property="Foreground" Value="#0284C7"/>
                                 <Setter Property="FontWeight" Value="Bold"/>
+                                <Setter Property="Panel.ZIndex" Value="20"/>
                             </Trigger>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="tabBorder" Property="Background" Value="#F8FAFC"/>
-                                <Setter Property="Foreground" Value="#0F172A"/>
+                                <Setter TargetName="tabBorder" Property="Background" Value="#F1F5F9"/>
                             </Trigger>
-                            <MultiTrigger>
-                                <MultiTrigger.Conditions>
-                                    <Condition Property="IsSelected" Value="True"/>
-                                    <Condition Property="IsMouseOver" Value="True"/>
-                                </MultiTrigger.Conditions>
-                                <Setter TargetName="tabBorder" Property="Background" Value="#FFFFFF"/>
-                                <Setter TargetName="tabBorder" Property="BorderBrush" Value="#0284C7"/>
-                                <Setter Property="Foreground" Value="#0284C7"/>
-                            </MultiTrigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
 
+        <!-- Modern TabControl Style with Solid Content Border -->
         <Style x:Key="ModernTabControl" TargetType="TabControl">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Padding" Value="0"/>
+            <Setter Property="BorderThickness" Value="1.5"/>
+            <Setter Property="BorderBrush" Value="#94A3B8"/>
+            <Setter Property="Background" Value="#FFFFFF"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TabControl">
-                        <Grid>
+                        <Grid KeyboardNavigation.TabNavigation="Local">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
-                            <Border Grid.Row="0" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1" Margin="0,0,0,10">
-                                <TabPanel IsItemsHost="True"/>
+                            
+                            <!-- Tab Header Row -->
+                            <TabPanel Grid.Row="0" IsItemsHost="True" Panel.ZIndex="10" Margin="4,0,4,-1"/>
+                            
+                            <!-- Tab Content Area Container -->
+                            <Border Grid.Row="1" 
+                                    Background="#FFFFFF" 
+                                    BorderBrush="#94A3B8" 
+                                    BorderThickness="1.5" 
+                                    CornerRadius="0,8,8,8" 
+                                    Padding="14"
+                                    Panel.ZIndex="0">
+                                <ContentPresenter x:Name="PART_SelectedContentHost" 
+                                                  ContentSource="SelectedContent"/>
                             </Border>
-                            <ContentPresenter Grid.Row="1" ContentSource="SelectedContent"/>
                         </Grid>
                     </ControlTemplate>
                 </Setter.Value>
@@ -228,6 +238,14 @@
             <GradientStop Color="#0C4A6E" Offset="1.0"/>
         </LinearGradientBrush>
 
+        <!-- Gray Tank Water Brush for Stopped State -->
+        <LinearGradientBrush x:Key="TankWaterGrayBrush" StartPoint="0,0" EndPoint="0,1">
+            <GradientStop Color="#CBD5E1" Offset="0.0"/>
+            <GradientStop Color="#94A3B8" Offset="0.3"/>
+            <GradientStop Color="#64748B" Offset="0.7"/>
+            <GradientStop Color="#475569" Offset="1.0"/>
+        </LinearGradientBrush>
+
         <!-- 3D Pipe Flange Brush -->
         <LinearGradientBrush x:Key="PipeFlangeBrush" StartPoint="0,0" EndPoint="0,1">
             <GradientStop Color="#475569" Offset="0.0"/>
@@ -260,12 +278,17 @@
                 <MenuItem Header="🏭  MPS Pneumatic Simulator" Click="MenuAppMPSPneumatic_Click" />
             </MenuItem>
             <MenuItem Header="_Help">
+                <MenuItem Header="📁  Open Example Programs" Click="BtnExamplePrograms_Click" />
+                <Separator/>
                 <MenuItem Header="🏷️  Address &amp; Register Reference" Click="MenuMapping_Click" />
                 <MenuItem Header="📜  Changelog" Click="MenuChangelog_Click" />
+                <MenuItem Header="💬  Send Feedback / Bug Report" Click="MenuFeedback_Click" />
                 <Separator/>
                 <MenuItem Header="🔄  Check for Updates..." Click="MenuCheckUpdate_Click" />
                 <MenuItem Header="ℹ️  About NetToCxSim" Click="MenuAbout_Click" />
             </MenuItem>
+            <MenuItem Header="📁 Example Program HMI" Click="BtnExamplePrograms_Click" Foreground="#2563EB" FontWeight="Bold" ToolTip="Open Example Programs folder in Public directory"/>
+            <MenuItem Header="💬 Feedback" Click="MenuFeedback_Click" Foreground="#059669" FontWeight="SemiBold" ToolTip="Send feedback or submit bug reports via Google Form"/>
             <MenuItem Header="🔄 Check for Update" Click="MenuCheckUpdate_Click" Foreground="#0284C7" FontWeight="SemiBold" ToolTip="Check for NetToCxSim updates on GitHub"/>
             <MenuItem Header="☕ Donate" Click="MenuDonate_Click" Foreground="#D97706" FontWeight="SemiBold" ToolTip="Support the author via Saweria (https://saweria.co/ismaillowkey)">
                 <MenuItem Header="Open Saweria (https://saweria.co/ismaillowkey)" Click="MenuDonate_Click" />
@@ -335,7 +358,7 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- FINS TCP/UDP Server Status Badge -->
+                    <!-- FINS TCP Server Status Badge -->
                     <Border Background="#F8FAFC" CornerRadius="8" Padding="14,8" BorderThickness="1" BorderBrush="#E2E8F0" Margin="0,0,12,0">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <Ellipse x:Name="FinsDot" Width="12" Height="12" Fill="#2563EB" Margin="0,0,10,0">
@@ -343,9 +366,23 @@
                                     <DropShadowEffect x:Name="FinsDotGlow" Color="#2563EB" BlurRadius="8" ShadowDepth="0" Opacity="0.9"/>
                                 </Ellipse.Effect>
                             </Ellipse>
-                            <StackPanel>
-                                <TextBlock x:Name="FinsStatusText" Text="FINS SERVER :9600" FontWeight="Bold" FontSize="13" Foreground="#2563EB"/>
-                                <TextBlock x:Name="FinsClientText" Text="TCP &amp; UDP Ready (0 Clients)" FontSize="11" Foreground="#64748B"/>
+                            <StackPanel VerticalAlignment="Center" Margin="0,0,12,0">
+                                <TextBlock x:Name="FinsStatusText" Text="FINS TCP SERVER" FontWeight="Bold" FontSize="12.5" Foreground="#2563EB"/>
+                                <TextBlock x:Name="FinsClientText" Text="TCP Ready (0 Clients)" FontSize="11" Foreground="#64748B"/>
+                            </StackPanel>
+
+                            <!-- Numeric Up/Down Port Input -->
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="Port: " FontSize="11" Foreground="#64748B" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                <Border Background="#FFFFFF" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="6" Height="26" VerticalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBox x:Name="TxtFinsPort" Text="9600" Width="46" BorderThickness="0" Background="Transparent" VerticalAlignment="Center" TextAlignment="Center" FontWeight="Bold" FontSize="11" Foreground="#0F172A" LostFocus="TxtFinsPort_LostFocus" KeyDown="TxtFinsPort_KeyDown"/>
+                                        <StackPanel VerticalAlignment="Center" Margin="0,0,2,0">
+                                            <Button x:Name="BtnFinsPortUp" Content="▲" FontSize="7" Width="16" Height="11" Padding="0" Background="#E2E8F0" BorderThickness="0" Click="BtnFinsPortUp_Click" Cursor="Hand"/>
+                                            <Button x:Name="BtnFinsPortDown" Content="▼" FontSize="7" Width="16" Height="11" Padding="0" Background="#E2E8F0" BorderThickness="0" Margin="0,1,0,0" Click="BtnFinsPortDown_Click" Cursor="Hand"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
                             </StackPanel>
                         </StackPanel>
                     </Border>
@@ -369,7 +406,7 @@
         </Border>
 
         <!-- Row 1: 3 SEPARATE CARDS (WORKFLOW, DATA CONNECTION ARCHITECTURE, HMI & SCADA GUIDE) -->
-        <Grid Grid.Row="1" Margin="0,0,0,12" MinHeight="255">
+        <Grid Grid.Row="1" Margin="0,0,0,12" MinHeight="268">
             <Grid.ColumnDefinitions>
                 <!-- Left Card: 5-Step CX-Programmer Workflow (Vertical 1-5) -->
                 <ColumnDefinition Width="245"/>
@@ -549,33 +586,41 @@
                                 </Grid>
                             </Grid>
 
-                            <!-- CENTER: NetToCxSim (Dual Server: FINS + OPC DA Classic) -->
-                            <Border Grid.Column="2" VerticalAlignment="Center" Background="#EFF6FF" BorderBrush="#3B82F6" BorderThickness="2" CornerRadius="10" Padding="12,12">
+                            <!-- CENTER: NetToCxSim (Triple Server: FINS + OPC DA + OPC UA) -->
+                            <Border Grid.Column="2" VerticalAlignment="Center" Background="#EFF6FF" BorderBrush="#3B82F6" BorderThickness="2" CornerRadius="10" Padding="12,10">
                                 <StackPanel HorizontalAlignment="Center">
-                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,8">
-                                        <Border Width="26" Height="26" CornerRadius="13" Background="#2563EB" Margin="0,0,8,0">
-                                            <TextBlock Text="⚡" FontSize="14" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,6">
+                                        <Border Width="24" Height="24" CornerRadius="12" Background="#2563EB" Margin="0,0,8,0">
+                                            <TextBlock Text="⚡" FontSize="13" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                         </Border>
                                         <TextBlock Text="NetToCxSim Bridge" FontSize="13.5" FontWeight="Bold" Foreground="#1D4ED8" VerticalAlignment="Center"/>
                                     </StackPanel>
 
-                                    <!-- Server 1: FINS TCP/UDP -->
-                                    <Border Background="#DBEAFE" BorderBrush="#93C5FD" BorderThickness="1.5" CornerRadius="6" Padding="10,5" Margin="0,0,0,6" HorizontalAlignment="Stretch">
+                                    <!-- Server 1: FINS TCP -->
+                                    <Border Background="#DBEAFE" BorderBrush="#93C5FD" BorderThickness="1.5" CornerRadius="6" Padding="10,4" Margin="0,0,0,4" HorizontalAlignment="Stretch">
                                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                            <TextBlock Text="🌐 FINS TCP/UDP" FontSize="10.5" FontWeight="Bold" Foreground="#1E40AF"/>
-                                            <TextBlock x:Name="TxtDiagramBridgePort" Text=" :9600" FontSize="10.5" FontWeight="Bold" Foreground="#2563EB"/>
+                                            <TextBlock Text="🌐 FINS TCP" FontSize="10" FontWeight="Bold" Foreground="#1E40AF"/>
+                                            <TextBlock x:Name="TxtDiagramBridgePort" Text=" :9600" FontSize="10" FontWeight="Bold" Foreground="#2563EB"/>
                                         </StackPanel>
                                     </Border>
 
                                     <!-- Server 2: OPC DA Server Classic -->
-                                    <Border Background="#F3E8FF" BorderBrush="#D8B4FE" BorderThickness="1.5" CornerRadius="6" Padding="10,5" HorizontalAlignment="Stretch">
-                                        <TextBlock Text="🏭 OPC DA 2.05a Classic" FontSize="10.5" FontWeight="Bold" Foreground="#7E22CE" HorizontalAlignment="Center"/>
+                                    <Border Background="#F3E8FF" BorderBrush="#D8B4FE" BorderThickness="1.5" CornerRadius="6" Padding="10,4" Margin="0,0,0,4" HorizontalAlignment="Stretch">
+                                        <TextBlock Text="🏭 OPC DA 2.05a Classic" FontSize="10" FontWeight="Bold" Foreground="#7E22CE" HorizontalAlignment="Center"/>
+                                    </Border>
+
+                                    <!-- Server 3: OPC UA Modern Server -->
+                                    <Border Background="#CCFBF1" BorderBrush="#5EEAD4" BorderThickness="1.5" CornerRadius="6" Padding="10,4" HorizontalAlignment="Stretch">
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                            <TextBlock Text="🛡️ OPC UA (opc.tcp)" FontSize="10" FontWeight="Bold" Foreground="#0F766E"/>
+                                            <TextBlock x:Name="TxtDiagramUaPort" Text=" :48400" FontSize="10" FontWeight="Bold" Foreground="#0D9488"/>
+                                        </StackPanel>
                                     </Border>
                                 </StackPanel>
                             </Border>
 
-                            <!-- CONNECTOR MIDDLE TO RIGHT: Dual Protocol Out -->
-                            <Grid Grid.Column="3" VerticalAlignment="Center" Margin="10,0,10,0">
+                            <!-- CONNECTOR MIDDLE TO RIGHT: Triple Protocol Out -->
+                            <Grid Grid.Column="3" VerticalAlignment="Center" Margin="8,0,8,0">
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
@@ -583,60 +628,86 @@
                                 </Grid.RowDefinitions>
 
                                 <!-- Top: FINS Line Badge -->
-                                <Border Grid.Row="0" Background="#DCFCE7" BorderBrush="#86EFAC" BorderThickness="1.2" CornerRadius="6" Padding="10,4" HorizontalAlignment="Center" Margin="0,0,0,6">
-                                    <TextBlock Text="FINS Port 9600" FontSize="9.5" FontWeight="Bold" Foreground="#16A34A"/>
+                                <Border Grid.Row="0" Background="#DCFCE7" BorderBrush="#86EFAC" BorderThickness="1.2" CornerRadius="6" Padding="8,3" HorizontalAlignment="Center" Margin="0,0,0,4">
+                                    <TextBlock x:Name="TxtDiagramFinsPort" Text="FINS Port 9600" FontSize="9" FontWeight="Bold" Foreground="#16A34A"/>
                                 </Border>
 
-                                <Grid Grid.Row="1" Height="28" HorizontalAlignment="Stretch">
+                                <Grid Grid.Row="1" Height="44" HorizontalAlignment="Stretch">
                                     <!-- Green FINS line (Top) -->
-                                    <Line X1="0" Y1="6" X2="1000" Y2="6" Stroke="#16A34A" StrokeThickness="2.2" StrokeDashArray="5 3" Stretch="Fill"/>
-                                    <Polygon Points="7,6 0,1 0,11" Fill="#16A34A" HorizontalAlignment="Right" VerticalAlignment="Top"/>
+                                    <Line X1="0" Y1="6" X2="1000" Y2="6" Stroke="#16A34A" StrokeThickness="2" StrokeDashArray="5 3" Stretch="Fill"/>
+                                    <Polygon Points="6,6 0,2 0,10" Fill="#16A34A" HorizontalAlignment="Right" VerticalAlignment="Top"/>
 
-                                    <!-- Purple OPC DA line (Bottom) -->
-                                    <Line X1="0" Y1="22" X2="1000" Y2="22" Stroke="#9333EA" StrokeThickness="2.2" Stretch="Fill"/>
-                                    <Polygon Points="7,22 0,17 0,27" Fill="#9333EA" HorizontalAlignment="Right" VerticalAlignment="Top"/>
+                                    <!-- Purple OPC DA line (Middle) -->
+                                    <Line X1="0" Y1="22" X2="1000" Y2="22" Stroke="#9333EA" StrokeThickness="2" Stretch="Fill"/>
+                                    <Polygon Points="6,22 0,18 0,26" Fill="#9333EA" HorizontalAlignment="Right" VerticalAlignment="Top"/>
+
+                                    <!-- Teal OPC UA line (Bottom) -->
+                                    <Line X1="0" Y1="38" X2="1000" Y2="38" Stroke="#0D9488" StrokeThickness="2" StrokeDashArray="4 2" Stretch="Fill"/>
+                                    <Polygon Points="6,38 0,34 0,42" Fill="#0D9488" HorizontalAlignment="Right" VerticalAlignment="Top"/>
                                 </Grid>
 
-                                <!-- Bottom: OPC DA COM Line Badge -->
-                                <Border Grid.Row="2" Background="#FAF5FF" BorderBrush="#D8B4FE" BorderThickness="1.2" CornerRadius="6" Padding="10,4" HorizontalAlignment="Center" Margin="0,6,0,0">
-                                    <TextBlock Text="OPC DA (COM)" FontSize="9.5" FontWeight="Bold" Foreground="#7E22CE"/>
-                                </Border>
+                                <!-- Bottom: Badges for DA & UA -->
+                                <StackPanel Grid.Row="2" Orientation="Vertical" HorizontalAlignment="Center" Margin="0,4,0,0">
+                                    <Border Background="#FAF5FF" BorderBrush="#D8B4FE" BorderThickness="1.2" CornerRadius="6" Padding="8,2" Margin="0,0,0,3" HorizontalAlignment="Center">
+                                        <TextBlock Text="OPC DA (COM)" FontSize="8.5" FontWeight="Bold" Foreground="#7E22CE"/>
+                                    </Border>
+                                    <Border Background="#F0FDFA" BorderBrush="#5EEAD4" BorderThickness="1.2" CornerRadius="6" Padding="8,2" HorizontalAlignment="Center">
+                                        <TextBlock Text="OPC UA (opc.tcp)" FontSize="8.5" FontWeight="Bold" Foreground="#0F766E"/>
+                                    </Border>
+                                </StackPanel>
                             </Grid>
 
-                            <!-- RIGHT: HMI & OPC Clients (Two Stacked Cards) -->
+                            <!-- RIGHT: HMI & OPC Clients (Three Stacked Cards) -->
                             <Grid Grid.Column="4" VerticalAlignment="Center">
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="12"/>
+                                    <RowDefinition Height="6"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="6"/>
                                     <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
 
                                 <!-- Right 1: HMI / SCADA (FINS) -->
-                                <Border Grid.Row="0" Background="#F0FDF4" BorderBrush="#86EFAC" BorderThickness="1.5" CornerRadius="8" Padding="12,10">
+                                <Border Grid.Row="0" Background="#F0FDF4" BorderBrush="#86EFAC" BorderThickness="1.5" CornerRadius="8" Padding="10,7">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="28"/>
+                                            <ColumnDefinition Width="26"/>
                                             <ColumnDefinition Width="*"/>
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Text="📱" FontSize="20" VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="0" Text="📱" FontSize="18" VerticalAlignment="Center"/>
                                         <StackPanel Grid.Column="1" Margin="6,0,0,0" VerticalAlignment="Center">
-                                            <TextBlock Text="HMI / SCADA (FINS)" FontSize="12" FontWeight="Bold" Foreground="#15803D" TextTrimming="CharacterEllipsis"/>
-                                            <TextBlock Text="EasyBuilder / Ignition / Kepware" FontSize="9.5" Foreground="#64748B" TextTrimming="CharacterEllipsis"/>
+                                            <TextBlock Text="HMI / SCADA (FINS)" FontSize="11.5" FontWeight="Bold" Foreground="#15803D" TextTrimming="CharacterEllipsis"/>
+                                            <TextBlock Text="EasyBuilder / Ignition / Kepware" FontSize="9" Foreground="#64748B" TextTrimming="CharacterEllipsis"/>
                                         </StackPanel>
                                     </Grid>
                                 </Border>
 
                                 <!-- Right 2: OPC DA Clients (Classic) -->
-                                <Border Grid.Row="2" Background="#FAF5FF" BorderBrush="#C084FC" BorderThickness="1.5" CornerRadius="8" Padding="12,10">
+                                <Border Grid.Row="2" Background="#FAF5FF" BorderBrush="#C084FC" BorderThickness="1.5" CornerRadius="8" Padding="10,7">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="28"/>
+                                            <ColumnDefinition Width="26"/>
                                             <ColumnDefinition Width="*"/>
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Text="🏭" FontSize="20" VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="0" Text="🏭" FontSize="18" VerticalAlignment="Center"/>
                                         <StackPanel Grid.Column="1" Margin="6,0,0,0" VerticalAlignment="Center">
-                                            <TextBlock Text="OPC DA Classic Clients" FontSize="12" FontWeight="Bold" Foreground="#6B21A8" TextTrimming="CharacterEllipsis"/>
-                                            <TextBlock Text="OPC Expert / Matrikon / Kepware" FontSize="9.5" Foreground="#64748B" TextTrimming="CharacterEllipsis"/>
+                                            <TextBlock Text="OPC DA Classic Clients" FontSize="11.5" FontWeight="Bold" Foreground="#6B21A8" TextTrimming="CharacterEllipsis"/>
+                                            <TextBlock Text="OPC Expert / Matrikon / Kepware" FontSize="9" Foreground="#64748B" TextTrimming="CharacterEllipsis"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Right 3: OPC UA Clients (Modern) -->
+                                <Border Grid.Row="4" Background="#F0FDFA" BorderBrush="#5EEAD4" BorderThickness="1.5" CornerRadius="8" Padding="10,7">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="26"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="🛡️" FontSize="18" VerticalAlignment="Center"/>
+                                        <StackPanel Grid.Column="1" Margin="6,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock Text="OPC UA Modern Clients" FontSize="11.5" FontWeight="Bold" Foreground="#0F766E" TextTrimming="CharacterEllipsis"/>
+                                            <TextBlock Text="UaExpert / Ignition / Node-RED" FontSize="9" Foreground="#64748B" TextTrimming="CharacterEllipsis"/>
                                         </StackPanel>
                                     </Grid>
                                 </Border>
@@ -666,7 +737,7 @@
                         <Grid Margin="0,0,0,6">
                             <TextBlock Text="• Protocols:" FontSize="10.5" FontWeight="SemiBold" Foreground="#475569" Width="82" HorizontalAlignment="Left"/>
                             <TextBlock Margin="82,0,0,0" FontSize="10.5" FontWeight="Bold" Foreground="#0F172A">
-                                <Run Foreground="#16A34A">FINS (TCP/UDP)</Run> &amp; <Run Foreground="#7E22CE">OPC DA</Run>
+                                <Run Foreground="#16A34A">FINS TCP</Run>, <Run Foreground="#7E22CE">OPC DA</Run> &amp; <Run Foreground="#0D9488">UA</Run>
                             </TextBlock>
                         </Grid>
 
@@ -687,10 +758,18 @@
                         </Grid>
 
                         <!-- 5. OPC DA ProgID -->
-                        <Grid>
+                        <Grid Margin="0,0,0,6">
                             <TextBlock Text="• OPC ProgID:" FontSize="10.5" FontWeight="SemiBold" Foreground="#475569" Width="82" HorizontalAlignment="Left"/>
                             <TextBlock Margin="82,0,0,0" FontSize="10.5" FontWeight="Bold" Foreground="#7E22CE" TextTrimming="CharacterEllipsis">
                                 NetToCxSim.OPCServer.DA
+                            </TextBlock>
+                        </Grid>
+
+                        <!-- 6. OPC UA URL -->
+                        <Grid>
+                            <TextBlock Text="• OPC UA URL:" FontSize="10.5" FontWeight="SemiBold" Foreground="#475569" Width="82" HorizontalAlignment="Left"/>
+                            <TextBlock Margin="82,0,0,0" FontSize="10" FontWeight="Bold" Foreground="#0D9488" TextTrimming="CharacterEllipsis">
+                                opc.tcp://localhost:48400
                             </TextBlock>
                         </Grid>
                     </StackPanel>
@@ -711,19 +790,16 @@
 
                 <StackPanel>
                     <!-- DIGITAL INPUTS SECTION (CIO 0.00 s/d 0.12) -->
-                    <Border Background="{StaticResource CardGradient}" CornerRadius="12" Padding="14,10" Margin="0,0,0,8" BorderBrush="#E2E8F0" BorderThickness="1">
-                        <Border.Effect>
-                            <DropShadowEffect Color="#64748B" BlurRadius="10" ShadowDepth="2" Opacity="0.06"/>
-                        </Border.Effect>
+                    <Border Background="#F8FAFC" CornerRadius="10" Padding="14,10" Margin="0,0,0,10" BorderBrush="#E2E8F0" BorderThickness="1.5">
                         <StackPanel>
-                            <Grid Margin="0,0,0,10">
+                            <Grid Margin="0,0,0,8">
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                    <Border Width="8" Height="8" CornerRadius="4" Background="#0284C7" Margin="0,0,8,0"/>
-                                    <TextBlock Text="DIGITAL INPUT TERMINALS (TOGGLE SWITCHES)" FontSize="12" FontWeight="Bold" Foreground="#0369A1"/>
-                                    <TextBlock Text="— CIO 0.00 to CIO 0.12" FontSize="12" Foreground="#64748B" Margin="8,0,0,0"/>
+                                    <Border Width="9" Height="9" CornerRadius="4.5" Background="#2563EB" Margin="0,0,7,0"/>
+                                    <TextBlock Text="INPUT DIGITAL RACK (CIO 0.00 - CIO 0.12)" FontSize="12.5" FontWeight="Bold" Foreground="#0F172A"/>
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                                    <TextBlock x:Name="TxtInputWordHex" Text="Word CIO 0: 0x0000" FontSize="13" FontWeight="Bold" Foreground="#0284C7" VerticalAlignment="Center" Margin="0,0,14,0"/>
+                                    <TextBlock Text="Toggle switches to simulate digital input states in CX-Simulator" FontSize="10.5" Foreground="#64748B" VerticalAlignment="Center" Margin="0,0,16,0"/>
+                                    <TextBlock x:Name="TxtInputWordHex" Text="Word CIO 0: 0x0000" FontSize="12" FontWeight="Bold" Foreground="#0284C7" VerticalAlignment="Center" Margin="0,0,12,0"/>
                                     <Button Content="Reset All OFF" Style="{StaticResource ModernButton}" Background="#64748B" Padding="10,4" FontSize="11" Click="BtnResetInputs_Click"/>
                                 </StackPanel>
                             </Grid>
@@ -735,18 +811,17 @@
                     </Border>
 
                     <!-- DIGITAL OUTPUTS SECTION (CIO 100.00 s/d 100.07) -->
-                    <Border Background="{StaticResource CardGradient}" CornerRadius="12" Padding="12,8" BorderBrush="#E2E8F0" BorderThickness="1">
-                        <Border.Effect>
-                            <DropShadowEffect Color="#64748B" BlurRadius="10" ShadowDepth="2" Opacity="0.06"/>
-                        </Border.Effect>
+                    <Border Background="#F8FAFC" CornerRadius="10" Padding="14,10" Margin="0,0,0,0" BorderBrush="#E2E8F0" BorderThickness="1.5">
                         <StackPanel>
                             <Grid Margin="0,0,0,8">
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                    <Border Width="8" Height="8" CornerRadius="4" Background="#10B981" Margin="0,0,8,0"/>
-                                    <TextBlock Text="DIGITAL OUTPUT PILOT LAMPS" FontSize="12" FontWeight="Bold" Foreground="#047857"/>
-                                    <TextBlock Text="— CIO 100.00 to CIO 100.07" FontSize="12" Foreground="#64748B" Margin="8,0,0,0"/>
+                                    <Border Width="9" Height="9" CornerRadius="4.5" Background="#16A34A" Margin="0,0,7,0"/>
+                                    <TextBlock Text="OUTPUT DIGITAL RACK (CIO 100.00 - CIO 100.07)" FontSize="12.5" FontWeight="Bold" Foreground="#0F172A"/>
                                 </StackPanel>
-                                <TextBlock x:Name="TxtOutputWordHex" Text="Word CIO 100: 0x0000" FontSize="13" FontWeight="Bold" Foreground="#059669" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                    <TextBlock Text="Output LED indicators reflect virtual PLC coil logic in CX-Simulator in real-time" FontSize="10.5" Foreground="#64748B" VerticalAlignment="Center" Margin="0,0,16,0"/>
+                                    <TextBlock x:Name="TxtOutputWordHex" Text="Word CIO 100: 0x0000" FontSize="12" FontWeight="Bold" Foreground="#059669" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                </StackPanel>
                             </Grid>
 
                             <!-- Output Lamps 100.00 to 100.07 -->
@@ -767,10 +842,7 @@
                     </StackPanel>
                 </TabItem.Header>
 
-                <Border Background="{StaticResource CardGradient}" CornerRadius="12" Padding="16,12" BorderBrush="#E2E8F0" BorderThickness="1">
-                <Border.Effect>
-                    <DropShadowEffect Color="#64748B" BlurRadius="10" ShadowDepth="2" Opacity="0.06"/>
-                </Border.Effect>
+                <Border Background="#FFFFFF" CornerRadius="10" Padding="16,12" BorderBrush="#E2E8F0" BorderThickness="1.5">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -784,15 +856,34 @@
                             <Border Width="8" Height="8" CornerRadius="4" Background="#0284C7" Margin="0,0,8,0"/>
                             <TextBlock Text="WATER TANK FILLING &amp; LEVEL CONTROL SIMULATOR" FontSize="12" FontWeight="Bold" Foreground="#0369A1"/>
                             <TextBlock Text="— Water Filling Simulation &amp; PLC Float Sensors" FontSize="12" Foreground="#64748B" Margin="8,0,0,0"/>
+
+                            <!-- Start / Stop Simulator Button (Default Stop) -->
+                            <Button x:Name="BtnToggleWaterSim" Content="▶ Start Simulator" 
+                                    Style="{StaticResource ModernButton}" 
+                                    Background="#10B981" 
+                                    Foreground="White" 
+                                    FontWeight="Bold" 
+                                    FontSize="11" 
+                                    Padding="12,4" 
+                                    Margin="18,0,0,0" 
+                                    Click="BtnToggleWaterSim_Click"
+                                    ToolTip="Toggle interactive water tank simulation"/>
+
+                            <!-- Simulator Status Badge -->
+                            <Border x:Name="BadgeWaterSimStatus" Background="#F1F5F9" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="4" Padding="8,2" Margin="8,0,0,0" VerticalAlignment="Center">
+                                <TextBlock x:Name="TxtWaterSimStatus" Text="STOPPED" FontSize="10" FontWeight="Bold" Foreground="#64748B"/>
+                            </Border>
                         </StackPanel>
+
                         <Border HorizontalAlignment="Right" Background="#E0F2FE" CornerRadius="6" Padding="10,3" BorderBrush="#BAE6FD" BorderThickness="1">
                             <TextBlock Text="💧 SCADA Tank Process" FontSize="11" FontWeight="Bold" Foreground="#0284C7"/>
                         </Border>
                     </Grid>
 
                     <!-- 3D Process Visual Stage (DYNAMIC FULL SCREEN EXPANSION) -->
-                    <Border Grid.Row="1" Background="#FFFFFF" CornerRadius="10" Padding="8" Margin="0,0,0,10" BorderBrush="#CBD5E1" BorderThickness="1" MinHeight="260" VerticalAlignment="Stretch">
-                        <Viewbox Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Border x:Name="WaterStageContainer" Grid.Row="1" Background="#FFFFFF" CornerRadius="10" Padding="8" Margin="0,0,0,10" BorderBrush="#CBD5E1" BorderThickness="1" MinHeight="260" VerticalAlignment="Stretch">
+                        <Grid>
+                            <Viewbox x:Name="WaterViewbox" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0.52">
                                 <Canvas Width="920" Height="340" Background="#F8FAFC" ClipToBounds="True">
                                     <!-- Background Engineering Grid Ticks -->
                                     <Line X1="0" Y1="60" X2="920" Y2="60" Stroke="#F1F5F9" StrokeThickness="1"/>
@@ -838,13 +929,9 @@
                                             <!-- Liquid Water Volume (Dynamically Scaled) -->
                                             <Grid x:Name="WaterVolumeContainer" VerticalAlignment="Bottom" Height="30">
                                                 <!-- Surface Ripple Line -->
-                                                <Border Height="3" Background="#BAE6FD" VerticalAlignment="Top">
-                                                    <Border.Effect>
-                                                        <DropShadowEffect Color="#38BDF8" BlurRadius="6" Opacity="0.9"/>
-                                                    </Border.Effect>
-                                                </Border>
+                                                <Border x:Name="BorderSurfaceRipple" Height="3" Background="#CBD5E1" VerticalAlignment="Top"/>
                                                 <!-- Liquid Fluid Body -->
-                                                <Border Background="{StaticResource TankWaterBrush}" Margin="0,2,0,0"/>
+                                                <Border x:Name="BorderWaterFluid" Background="{StaticResource TankWaterGrayBrush}" Margin="0,2,0,0"/>
                                             </Grid>
 
                                             <!-- Digital Level Display Card Overlay -->
@@ -1058,7 +1145,11 @@
                                     </StackPanel>
                                 </Canvas>
                             </Viewbox>
-                        </Border>
+
+                            <!-- Grayscale Tint Overlay When Stopped -->
+                            <Border x:Name="WaterSimDisabledOverlay" Background="#94A3B8" Opacity="0.18" CornerRadius="8" IsHitTestVisible="False" Visibility="Visible"/>
+                        </Grid>
+                    </Border>
 
                         <!-- Operator Station & Mapping Reference -->
                         <Grid Grid.Row="2" Margin="0,2,0,0">
@@ -1068,7 +1159,7 @@
                             </Grid.ColumnDefinitions>
 
                             <!-- Operator Buttons -->
-                            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,16,0">
+                            <StackPanel x:Name="PanelWaterOperatorButtons" Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,16,0">
                                 <Button Content="▶ START AUTO (0.00)" Style="{StaticResource ModernButton}" Background="#16A34A" Padding="12,7" FontSize="11" Margin="0,0,8,0" PreviewMouseDown="BtnWaterStart_Down" PreviewMouseUp="BtnWaterStart_Up"/>
                                 <Button Content="⏹ STOP (0.01)" Style="{StaticResource ModernButton}" Background="#DC2626" Padding="12,7" FontSize="11" Margin="0,0,8,0" PreviewMouseDown="BtnWaterStop_Down" PreviewMouseUp="BtnWaterStop_Up"/>
                                 <Button Content="💧 Manual Fill (0.04)" Style="{StaticResource ModernButton}" Background="#0284C7" Padding="10,7" FontSize="11" Margin="0,0,8,0" Click="BtnManualFill_Click"/>
@@ -1099,10 +1190,7 @@
 
                 <StackPanel Margin="0,4,0,0">
                     <!-- SERVER STATUS & CONFIG CARD -->
-                    <Border Background="{StaticResource CardGradient}" CornerRadius="12" Padding="16,12" Margin="0,0,0,10" BorderBrush="#E2E8F0" BorderThickness="1">
-                        <Border.Effect>
-                            <DropShadowEffect Color="#64748B" BlurRadius="10" ShadowDepth="2" Opacity="0.06"/>
-                        </Border.Effect>
+                    <Border Background="#FFFFFF" CornerRadius="10" Padding="16,12" Margin="0,0,0,10" BorderBrush="#E2E8F0" BorderThickness="1.5">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -1158,10 +1246,7 @@
                     </Border>
 
                     <!-- TAG MANAGEMENT WORKSTATION (KEPWARE STYLE) -->
-                    <Border Background="{StaticResource CardGradient}" CornerRadius="12" Padding="16,14" BorderBrush="#E2E8F0" BorderThickness="1">
-                        <Border.Effect>
-                            <DropShadowEffect Color="#64748B" BlurRadius="10" ShadowDepth="2" Opacity="0.06"/>
-                        </Border.Effect>
+                    <Border Background="#FFFFFF" CornerRadius="10" Padding="16,14" BorderBrush="#E2E8F0" BorderThickness="1.5">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -1384,7 +1469,221 @@
                 </StackPanel>
             </TabItem>
 
-            <!-- TAB 4: ADVANCED INSPECTOR & LOG (Visible when Mode: Advanced) -->
+            <!-- TAB 4: OPC UA SERVER (MODERN UA) -->
+            <TabItem x:Name="TabOpcUaServer" Style="{StaticResource ModernTabItem}">
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border Width="7" Height="7" CornerRadius="3.5" Background="#0D9488" Margin="0,0,7,0"/>
+                        <TextBlock Text="OPC UA Server" FontWeight="Bold"/>
+                        <TextBlock Text="(opc.tcp)" FontSize="11" Foreground="#64748B" Margin="6,0,0,0"/>
+                    </StackPanel>
+                </TabItem.Header>
+
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0">
+                    <StackPanel Margin="0,4,0,0">
+                        <!-- OPC UA Server State Control Card -->
+                        <Border Background="#FFFFFF" CornerRadius="10" Padding="16,12" Margin="0,0,0,10" BorderBrush="#E2E8F0" BorderThickness="1.5">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Server State Info -->
+                                <StackPanel Grid.Column="0">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,4">
+                                        <Ellipse x:Name="OpcUaStatusLed" Width="10" Height="10" Fill="#10B981" Margin="0,0,8,0"/>
+                                        <TextBlock x:Name="TxtOpcUaServerStatus" Text="OPC UA SERVER: RUNNING (AUTO-STARTED)" FontSize="13" FontWeight="Bold" Foreground="#047857"/>
+                                        <Border Background="#ECFDF5" CornerRadius="4" Padding="6,2" Margin="10,0,0,0">
+                                            <TextBlock Text="Anonymous Allowed" FontSize="10" FontWeight="Bold" Foreground="#059669"/>
+                                        </Border>
+                                        <Border Background="#EFF6FF" CornerRadius="4" Padding="6,2" Margin="6,0,0,0">
+                                            <TextBlock Text="Auto-Start ON" FontSize="10" FontWeight="Bold" Foreground="#2563EB"/>
+                                        </Border>
+                                        <Border Background="#FEF3C7" CornerRadius="4" Padding="6,2" Margin="6,0,0,0">
+                                            <TextBlock Text="Persistent Cert" FontSize="10" FontWeight="Bold" Foreground="#D97706"/>
+                                        </Border>
+                                    </StackPanel>
+
+                                    <!-- Row 1: Local Endpoint, Port, Sessions, Tags -->
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,2,0,4">
+                                        <TextBlock Text="Local Endpoint: " FontSize="11" Foreground="#64748B" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                        <TextBlock x:Name="TxtOpcUaEndpoint" Text="opc.tcp://localhost:48400/nettocxsim" FontSize="11" Foreground="#0D9488" FontWeight="Bold" Margin="0,0,16,0" VerticalAlignment="Center"/>
+
+                                        <TextBlock Text="Port: " FontSize="11" Foreground="#64748B" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                        <Border Background="#F8FAFC" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="6" Height="26" Margin="0,0,16,0" VerticalAlignment="Center">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBox x:Name="TxtOpcUaPort" Text="48400" Width="52" BorderThickness="0" Background="Transparent" VerticalAlignment="Center" TextAlignment="Center" FontWeight="Bold" FontSize="11" Foreground="#0F172A"/>
+                                                <StackPanel VerticalAlignment="Center" Margin="0,0,2,0">
+                                                    <Button x:Name="BtnOpcUaPortUp" Content="▲" FontSize="7" Width="16" Height="11" Padding="0" Background="#E2E8F0" BorderThickness="0" Click="BtnOpcUaPortUp_Click" Cursor="Hand"/>
+                                                    <Button x:Name="BtnOpcUaPortDown" Content="▼" FontSize="7" Width="16" Height="11" Padding="0" Background="#E2E8F0" BorderThickness="0" Margin="0,1,0,0" Click="BtnOpcUaPortDown_Click" Cursor="Hand"/>
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </Border>
+
+                                        <TextBlock Text="Active Clients: " FontSize="11" Foreground="#64748B" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                        <TextBlock x:Name="TxtOpcUaClientsCount" Text="0" FontSize="11" Foreground="#0F172A" FontWeight="Bold" Margin="0,0,16,0" VerticalAlignment="Center"/>
+
+                                        <TextBlock Text="Total Tags: " FontSize="11" Foreground="#64748B" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                        <TextBlock x:Name="TxtOpcUaTotalTags" Text="0" FontSize="11" Foreground="#0F172A" FontWeight="Bold" VerticalAlignment="Center"/>
+                                    </StackPanel>
+
+                                    <!-- Row 2: Network Endpoint -->
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,0">
+                                        <TextBlock Text="Network Endpoint: " FontSize="11" Foreground="#64748B" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                        <TextBlock x:Name="TxtOpcUaNetworkEndpoint" Text="opc.tcp://[Host]:48400/nettocxsim" FontSize="11" Foreground="#0284C7" FontWeight="Bold" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <!-- Server Actions -->
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Button x:Name="BtnStartOpcUaServer" Content="▶ Start Server" Style="{StaticResource ModernButton}" Background="#10B981" Padding="12,6" Margin="0,0,8,0" Visibility="Collapsed" Click="BtnStartOpcUaServer_Click"/>
+                                    <Button x:Name="BtnStopOpcUaServer" Content="⏹ Stop Server" Style="{StaticResource ModernButton}" Background="#EF4444" Padding="12,6" Margin="0,0,8,0" Visibility="Visible" Click="BtnStopOpcUaServer_Click"/>
+                                    <Button x:Name="BtnCopyUaEndpoint" Content="📋 Copy Endpoint" Style="{StaticResource ModernButton}" Background="#0D9488" Padding="12,6" Click="BtnCopyUaEndpoint_Click"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- Port Collision Notification Banner (Hidden by default, visible if port 48400 occupied) -->
+                        <Border x:Name="BorderOpcUaPortNotice" Background="#FFFBEB" CornerRadius="8" Padding="12,8" Margin="0,0,0,10" BorderBrush="#FCD34D" BorderThickness="1" Visibility="Collapsed">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="⚠️" FontSize="14" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                <TextBlock x:Name="TxtOpcUaPortNotice" Grid.Column="1" FontSize="11" Foreground="#B45309" FontWeight="SemiBold" TextWrapping="Wrap" VerticalAlignment="Center" Text="Port 48400 was occupied. Automatically switched to port 48401."/>
+                            </Grid>
+                        </Border>
+
+                        <!-- Synchronized Tags Table -->
+                        <Border Background="#FFFFFF" CornerRadius="10" Padding="16,14" BorderBrush="#E2E8F0" BorderThickness="1.5">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="LIVE SYNCHRONIZED OPC UA TAGS (ADDRESS SPACE: ns=2;s=NetToCXSim.*)" FontSize="12.5" FontWeight="Bold" Foreground="#0F172A" VerticalAlignment="Center"/>
+                                    <Button Grid.Column="1" Content="⚙ Configure Tags in OPC DA Tab" Style="{StaticResource ModernButton}" Background="#64748B" Padding="10,4" FontSize="11" Click="BtnSwitchToOpcDaTab_Click"/>
+                                </Grid>
+
+                                <DataGrid x:Name="DgOpcUaTags"
+                                          AutoGenerateColumns="False"
+                                          IsReadOnly="True"
+                                          CanUserAddRows="False"
+                                          CanUserDeleteRows="False"
+                                          SelectionMode="Single"
+                                          HeadersVisibility="Column"
+                                          GridLinesVisibility="Horizontal"
+                                          HorizontalGridLinesBrush="#E2E8F0"
+                                          Background="#FFFFFF"
+                                          AlternatingRowBackground="#F8FAFC"
+                                          RowHeight="30"
+                                          FontSize="12"
+                                          BorderBrush="#E2E8F0"
+                                          BorderThickness="1">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Tag Name" Binding="{Binding TagName}" Width="150">
+                                            <DataGridTextColumn.ElementStyle>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                                    <Setter Property="Foreground" Value="#0F172A"/>
+                                                    <Setter Property="VerticalAlignment" Value="Center"/>
+                                                    <Setter Property="Margin" Value="6,0"/>
+                                                </Style>
+                                            </DataGridTextColumn.ElementStyle>
+                                        </DataGridTextColumn>
+
+                                        <DataGridTextColumn Header="OPC UA NodeId" Binding="{Binding TagName, StringFormat='ns=2;s=NetToCXSim.{0}'}" Width="210">
+                                            <DataGridTextColumn.ElementStyle>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="FontFamily" Value="Consolas"/>
+                                                    <Setter Property="FontSize" Value="11"/>
+                                                    <Setter Property="Foreground" Value="#0D9488"/>
+                                                    <Setter Property="VerticalAlignment" Value="Center"/>
+                                                    <Setter Property="Margin" Value="6,0"/>
+                                                </Style>
+                                            </DataGridTextColumn.ElementStyle>
+                                        </DataGridTextColumn>
+
+                                        <DataGridTextColumn Header="Omron Memory" Binding="{Binding Address}" Width="110">
+                                            <DataGridTextColumn.ElementStyle>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="FontWeight" Value="Bold"/>
+                                                    <Setter Property="FontFamily" Value="Consolas"/>
+                                                    <Setter Property="Foreground" Value="#0284C7"/>
+                                                    <Setter Property="VerticalAlignment" Value="Center"/>
+                                                    <Setter Property="Margin" Value="6,0"/>
+                                                </Style>
+                                            </DataGridTextColumn.ElementStyle>
+                                        </DataGridTextColumn>
+
+                                        <DataGridTextColumn Header="Data Type" Binding="{Binding DataType}" Width="85">
+                                            <DataGridTextColumn.ElementStyle>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="FontSize" Value="11"/>
+                                                    <Setter Property="Foreground" Value="#475569"/>
+                                                    <Setter Property="VerticalAlignment" Value="Center"/>
+                                                    <Setter Property="Margin" Value="6,0"/>
+                                                </Style>
+                                            </DataGridTextColumn.ElementStyle>
+                                        </DataGridTextColumn>
+
+                                        <DataGridTextColumn Header="Live Value" Binding="{Binding Value}" Width="130">
+                                            <DataGridTextColumn.ElementStyle>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="FontWeight" Value="Bold"/>
+                                                    <Setter Property="FontFamily" Value="Consolas"/>
+                                                    <Setter Property="Foreground" Value="#047857"/>
+                                                    <Setter Property="VerticalAlignment" Value="Center"/>
+                                                    <Setter Property="Margin" Value="6,0"/>
+                                                </Style>
+                                            </DataGridTextColumn.ElementStyle>
+                                        </DataGridTextColumn>
+
+                                        <DataGridTemplateColumn Header="Quality" Width="100">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="6,0">
+                                                        <Border Width="8" Height="8" CornerRadius="4" Margin="0,0,6,0">
+                                                            <Border.Style>
+                                                                <Style TargetType="Border">
+                                                                    <Setter Property="Background" Value="#EF4444"/>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding Quality}" Value="Good">
+                                                                            <Setter Property="Background" Value="#10B981"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Border.Style>
+                                                        </Border>
+                                                        <TextBlock Text="{Binding Quality}" FontSize="11" Foreground="#475569"/>
+                                                    </StackPanel>
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+
+                                        <DataGridTextColumn Header="Timestamp" Binding="{Binding Timestamp, StringFormat='HH:mm:ss.fff'}" Width="*">
+                                            <DataGridTextColumn.ElementStyle>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="FontSize" Value="11"/>
+                                                    <Setter Property="FontFamily" Value="Consolas"/>
+                                                    <Setter Property="Foreground" Value="#64748B"/>
+                                                    <Setter Property="VerticalAlignment" Value="Center"/>
+                                                    <Setter Property="Margin" Value="6,0"/>
+                                                </Style>
+                                            </DataGridTextColumn.ElementStyle>
+                                        </DataGridTextColumn>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- TAB 5: ADVANCED INSPECTOR & LOG (Visible when Mode: Advanced) -->
             <TabItem x:Name="TabAdvancedInspector" Visibility="Collapsed" Style="{StaticResource ModernTabItem}">
                 <TabItem.Header>
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -1401,10 +1700,7 @@
                     </Grid.ColumnDefinitions>
 
                     <!-- Custom Address Inspector -->
-                    <Border Grid.Column="0" Background="{StaticResource CardGradient}" CornerRadius="12" Padding="18" Margin="0,0,16,0" BorderBrush="#E2E8F0" BorderThickness="1">
-                        <Border.Effect>
-                            <DropShadowEffect Color="#64748B" BlurRadius="10" ShadowDepth="2" Opacity="0.06"/>
-                        </Border.Effect>
+                    <Border Grid.Column="0" Background="#FFFFFF" CornerRadius="10" Padding="18" Margin="0,0,16,0" BorderBrush="#E2E8F0" BorderThickness="1.5">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -1414,7 +1710,7 @@
                             <StackPanel Grid.Row="0" Margin="0,0,0,12">
                                 <TextBlock Text="ANY ADDRESS INSPECTOR" FontSize="11" FontWeight="Bold" Foreground="#0284C7"/>
                                 <TextBlock Text="Read &amp; Write Any Variable (W, CIO, D, H, T, C)" FontSize="14" FontWeight="Bold" Foreground="#0F172A"/>
-                                <TextBlock Text="Contoh: W0.0, D0, T0 (Timer PV/Flag), C0 (Counter PV/Flag)" FontSize="11" Foreground="#64748B" Margin="0,2,0,0"/>
+                                <TextBlock Text="Example: W0.0, D0, T0 (Timer PV/Flag), C0 (Counter PV/Flag)" FontSize="11" Foreground="#64748B" Margin="0,2,0,0"/>
                             </StackPanel>
 
                             <StackPanel Grid.Row="1" VerticalAlignment="Top">
@@ -1448,10 +1744,7 @@
                     </Border>
 
                     <!-- Realtime Activity Log -->
-                    <Border Grid.Column="1" Background="{StaticResource CardGradient}" CornerRadius="12" Padding="18" BorderBrush="#E2E8F0" BorderThickness="1">
-                        <Border.Effect>
-                            <DropShadowEffect Color="#64748B" BlurRadius="10" ShadowDepth="2" Opacity="0.06"/>
-                        </Border.Effect>
+                    <Border Grid.Column="1" Background="#FFFFFF" CornerRadius="10" Padding="18" BorderBrush="#E2E8F0" BorderThickness="1.5">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>

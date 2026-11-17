@@ -4,6 +4,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Effects;
 using System.Windows.Shapes;
@@ -17,6 +18,8 @@ namespace NetToCXSim
         private readonly OmronSimulatorEngine _simEngine;
         private readonly OmronFinsServer _finsServer;
         private readonly OpcDaServerEngine _opcDaServer;
+        private readonly OpcUaServerEngine _opcUaServer;
+        private readonly AppSettings _appSettings;
         private readonly DispatcherTimer _pollTimer;
 
         // UI components for Inputs (0.00 to 0.12 = 13 inputs)
@@ -46,13 +49,17 @@ namespace NetToCXSim
             InitializeInputRack();
             InitializeOutputRack();
 
-            // Start FINS/TCP & UDP Server on port 9600 (auto fallback to 9601, 9602...)
-            _finsServer = new OmronFinsServer(_simEngine, 9600);
+            // Load persistent application settings
+            _appSettings = AppSettings.Load();
+
+            // Start FINS TCP Server on configured port (persisted in app_settings.json)
+            _finsServer = new OmronFinsServer(_simEngine, _appSettings.FinsPort);
             _finsServer.OnLog += (msg) =>
             {
                 Dispatcher.BeginInvoke((Action)(() => Log(msg)));
             };
             _finsServer.Start();
+            UpdateServerPortDisplay();
 
             // Initialize OPC DA Classic Server (Auto-start on app launch & auto-save enabled)
             _opcDaServer = new OpcDaServerEngine(_simEngine);
@@ -69,6 +76,29 @@ namespace NetToCXSim
             TxtTagStoragePath.ToolTip = _opcDaServer.StoragePath;
             _opcDaServer.StartServer();
             UpdateOpcServerUI();
+
+            // Initialize OPC UA Server (Auto-start on port 48400, anonymous allowed, mirrors OPC DA tags, persistent cert)
+            _opcUaServer = new OpcUaServerEngine(_opcDaServer);
+            _opcUaServer.OnLog += (msg) =>
+            {
+                Dispatcher.BeginInvoke((Action)(() => Log(msg)));
+            };
+            _opcUaServer.OnStateChanged += () =>
+            {
+                Dispatcher.BeginInvoke((Action)UpdateOpcUaServerUI);
+            };
+            DgOpcUaTags.ItemsSource = _opcDaServer.Tags;
+            UpdateOpcUaServerUI();
+
+            System.Threading.Tasks.Task.Run(async () =>
+            {
+                int uaPort = 48400;
+                if (_appSettings != null)
+                {
+                    uaPort = _appSettings.OpcUaPort;
+                }
+                await _opcUaServer.StartServerAsync(uaPort);
+            });
 
             // Auto-register OPC DA Server in Windows Registry on app startup so SCADA / OPC clients immediately detect it
             try
@@ -97,6 +127,7 @@ namespace NetToCXSim
             Log($"NetToCXSim Light Edition ready. FINS Bridge active on port {_finsServer.Port}.");
 
             UpdateModeDisplay();
+            UpdateWaterSimVisualState();
 
             // Auto-check for updates in background (non-blocking)
             _ = System.Threading.Tasks.Task.Run(async () =>
@@ -110,7 +141,11 @@ namespace NetToCXSim
         {
             if (_finsServer != null && _finsServer.IsRunning)
             {
-                FinsStatusText.Text = $"FINS SERVER :{_finsServer.Port}";
+                FinsStatusText.Text = "FINS TCP SERVER";
+                if (TxtFinsPort != null)
+                {
+                    TxtFinsPort.Text = $"{_finsServer.Port}";
+                }
                 if (TxtHmiGuidePort != null)
                 {
                     TxtHmiGuidePort.Text = $"{_finsServer.Port}";
@@ -118,6 +153,10 @@ namespace NetToCXSim
                 if (TxtDiagramBridgePort != null)
                 {
                     TxtDiagramBridgePort.Text = $" :{_finsServer.Port}";
+                }
+                if (TxtDiagramFinsPort != null)
+                {
+                    TxtDiagramFinsPort.Text = $"FINS Port {_finsServer.Port}";
                 }
             }
         }
@@ -371,8 +410,28 @@ namespace NetToCXSim
                     StatusDetail.Text = $"{procName} Active (PID: {_simEngine.ProcessId})";
 
                     // Update FINS Server status
-                    int clientCount = _finsServer?.ClientCount ?? 0;
-                    FinsClientText.Text = $"TCP & UDP Ready ({clientCount} Client{(clientCount == 1 ? "" : "s")})";
+                    int clientCount = 0;
+                    if (_finsServer != null)
+                    {
+                        clientCount = _finsServer.ClientCount;
+                    }
+
+                    string clientSuffix = "s";
+                    if (clientCount == 1)
+                    {
+                        clientSuffix = "";
+                    }
+                    FinsClientText.Text = $"TCP Ready ({clientCount} Client{clientSuffix})";
+
+                    // Update live client counts across all servers
+                    if (_opcUaServer != null && TxtOpcUaClientsCount != null)
+                    {
+                        TxtOpcUaClientsCount.Text = _opcUaServer.ClientCount.ToString();
+                    }
+                    if (_opcDaServer != null && TxtOpcClientsCount != null)
+                    {
+                        TxtOpcClientsCount.Text = _opcDaServer.ClientCount.ToString();
+                    }
 
                     // 1. Read Inputs (Word CIO 0)
                     ushort? inWord = _simEngine.ReadWord(OmronSimulatorEngine.MemoryArea.CIO, 0);
@@ -463,6 +522,16 @@ namespace NetToCXSim
 
                     TxtInputWordHex.Text = "Word CIO 0: --";
                     TxtOutputWordHex.Text = "Word CIO 100: --";
+
+                    // Update live client counts when offline
+                    if (_opcUaServer != null && TxtOpcUaClientsCount != null)
+                    {
+                        TxtOpcUaClientsCount.Text = _opcUaServer.ClientCount.ToString();
+                    }
+                    if (_opcDaServer != null && TxtOpcClientsCount != null)
+                    {
+                        TxtOpcClientsCount.Text = _opcDaServer.ClientCount.ToString();
+                    }
 
                     UpdateWaterSystemPhysics(0);
                 }
@@ -572,11 +641,12 @@ namespace NetToCXSim
             if (_finsServer != null)
             {
                 _finsServer.Start();
+            UpdateServerPortDisplay();
                 UpdateServerPortDisplay();
                 FinsStatusText.Foreground = new SolidColorBrush(Color.FromRgb(37, 99, 235));
                 FinsDot.Fill = new SolidColorBrush(Color.FromRgb(37, 99, 235));
                 FinsDotGlow.Color = Color.FromRgb(37, 99, 235);
-                Log($"[Server] FINS Server manually started on port {_finsServer.Port}.");
+                Log($"[Server] FINS TCP Server manually started on port {_finsServer.Port}.");
             }
         }
 
@@ -586,10 +656,11 @@ namespace NetToCXSim
             {
                 _finsServer.Stop();
                 FinsStatusText.Text = "FINS STOPPED";
+                FinsClientText.Text = "Server Stopped";
                 FinsStatusText.Foreground = new SolidColorBrush(Color.FromRgb(239, 68, 68));
                 FinsDot.Fill = new SolidColorBrush(Color.FromRgb(239, 68, 68));
                 FinsDotGlow.Color = Color.FromRgb(239, 68, 68);
-                Log("[Server] FINS Server manually stopped.");
+                Log("[Server] FINS TCP Server manually stopped.");
             }
         }
 
@@ -614,7 +685,20 @@ namespace NetToCXSim
         private void MenuChangelog_Click(object sender, RoutedEventArgs e)
         {
             string changelog =
-                "v0.5.2 (Current)\n" +
+                "v0.6.2 (Current)\n" +
+                "• FINS TCP Port Configuration: Interactive Numeric Up/Down controls with dynamic port validation (1024 - 65535)\n" +
+                "• Proactive Port Collision Detection: Automatically checks if the port is occupied and shifts up to the next available port with instant UI feedback\n" +
+                "• Pure FINS TCP Engine: Removed redundant UDP listener to eliminate port contention on UDP port 9600\n" +
+                "• Example Programs Quick Button: Added '📁 Example Program HMI' top menu item to open %PUBLIC%\\NetToCxSim\\Example Program\n" +
+                "• Water Tank Simulation Control: Added interactive Start/Stop button with complete visual graying and physics suspension\n" +
+                "• Streamlined Packaging: Consolidated all published binaries and setup installers under publish\\ (removed legacy publish_x86)\n" +
+                "• User Feedback Integration: Added direct Google Form feedback and bug submission link\n\n" +
+                "v0.6.1\n" +
+                "• Modern OPC UA Server (opc.tcp) with auto-start, dynamic port collision resolution, and anonymous authentication\n" +
+                "• Bidirectional live tag synchronization bridging OPC DA Classic with OPC UA address space (ns=2;s=NetToCXSim.*)\n" +
+                "• Machine-wide persistent X.509 certificate surviving repeated uninstalls and reinstalls via Windows Certificate Store & %ProgramData%\n" +
+                "• Modern OPC UA dashboard tab with active session monitor, dynamic port controls, and direct tag management\n\n" +
+                "v0.5.2\n" +
                 "• Multi-Engine & Accurate PLC CPU Auto-Detection (CP1 / CP2E / CJ1 / CJ2 / CS1 / CS2) via CxOsRoutine*.dll (ExSys_cpu_type) and MainExPLCModel shared memory\n" +
                 "• Dynamic PE Export Table memory pointer resolution via CpuClearCio (with 0xA184 / 0xC18C fallbacks)\n" +
                 "• Prominent DETECTED PLC CPU header badge & live FINS 05 01 controller model response\n" +
@@ -773,6 +857,97 @@ namespace NetToCXSim
             OpenExternalLink("https://saweria.co/ismaillowkey");
         }
 
+        private void MenuFeedback_Click(object sender, RoutedEventArgs e)
+        {
+            OpenExternalLink("https://forms.gle/s6PBT3iJutDyGaXj7");
+        }
+
+        private void BtnExamplePrograms_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                string publicFolder = Environment.GetEnvironmentVariable("PUBLIC");
+                if (string.IsNullOrEmpty(publicFolder))
+                {
+                    publicFolder = @"C:\Users\Public";
+                }
+
+                string targetDir = System.IO.Path.Combine(publicFolder, "NetToCxSim", "Example Program");
+                if (!System.IO.Directory.Exists(targetDir))
+                {
+                    System.IO.Directory.CreateDirectory(targetDir);
+
+                    // If running in development environment, copy from repository root if available
+                    string devSource = FindDevExampleDirectory();
+                    if (!string.IsNullOrEmpty(devSource))
+                    {
+                        if (System.IO.Directory.Exists(devSource))
+                        {
+                            CopyDirectoryRecursive(devSource, targetDir);
+                        }
+                    }
+                }
+
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = targetDir,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to open example programs folder:\n{ex.Message}", "Example Programs", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+
+        private string FindDevExampleDirectory()
+        {
+            string current = AppDomain.CurrentDomain.BaseDirectory;
+
+            for (int i = 0; i < 6; i++)
+            {
+                if (string.IsNullOrEmpty(current))
+                {
+                    break;
+                }
+
+                string candidate = System.IO.Path.Combine(current, "Example PLC and HMI");
+                if (System.IO.Directory.Exists(candidate))
+                {
+                    return candidate;
+                }
+
+                DirectoryInfo parent = Directory.GetParent(current);
+                if (parent == null)
+                {
+                    break;
+                }
+                current = parent.FullName;
+            }
+
+            return null;
+        }
+
+        private static void CopyDirectoryRecursive(string sourceDir, string targetDir)
+        {
+            foreach (string dirPath in Directory.GetDirectories(sourceDir, "*", SearchOption.AllDirectories))
+            {
+                string relativePath = dirPath.Substring(sourceDir.Length).TrimStart('\\', '/');
+                string destDir = System.IO.Path.Combine(targetDir, relativePath);
+                if (!Directory.Exists(destDir))
+                {
+                    Directory.CreateDirectory(destDir);
+                }
+            }
+
+            foreach (string filePath in Directory.GetFiles(sourceDir, "*.*", SearchOption.AllDirectories))
+            {
+                string relativePath = filePath.Substring(sourceDir.Length).TrimStart('\\', '/');
+                string destFile = System.IO.Path.Combine(targetDir, relativePath);
+                File.Copy(filePath, destFile, true);
+            }
+        }
+
         private async void MenuCheckUpdate_Click(object sender, RoutedEventArgs e)
         {
             await CheckForUpdatesAsync(isManual: true);
@@ -849,14 +1024,301 @@ namespace NetToCXSim
         }
 
         // ================= Water Filling & Level Simulator Logic =================
+        private bool _isWaterSimRunning = false; // Default STOPPED as requested
         private double _waterLevel = 15.0; // Level in percentage (0.0% to 100.0%)
         private bool _lastFloatLow = false;
         private bool _lastFloatHigh = false;
         private double _pumpAngle = 0;
 
+        private void BtnToggleWaterSim_Click(object sender, RoutedEventArgs e)
+        {
+            if (_isWaterSimRunning)
+            {
+                _isWaterSimRunning = false;
+                Log("[WATER SIMULATOR] Simulator stopped by user. All water physics and sensor sync are inactive.");
+
+                // Clear simulated float sensors in PLC so ladder logic doesn't hold old simulation states
+                if (_simEngine != null && _simEngine.IsConnected)
+                {
+                    _simEngine.WriteBit(OmronSimulatorEngine.MemoryArea.CIO, 0, 2, false);
+                    _simEngine.WriteBit(OmronSimulatorEngine.MemoryArea.CIO, 0, 3, false);
+                }
+                _lastFloatLow = false;
+                _lastFloatHigh = false;
+            }
+            else
+            {
+                _isWaterSimRunning = true;
+                Log("[WATER SIMULATOR] Simulator started by user. Real-time physics active.");
+            }
+
+            UpdateWaterSimVisualState();
+        }
+
+        private void UpdateWaterSimVisualState()
+        {
+            if (BtnToggleWaterSim == null)
+            {
+                return;
+            }
+
+            if (_isWaterSimRunning)
+            {
+                // Active Running State
+                BtnToggleWaterSim.Content = "⏹ Stop Simulator";
+                BtnToggleWaterSim.Background = new SolidColorBrush(Color.FromRgb(239, 68, 68)); // Red
+                BtnToggleWaterSim.ToolTip = "Stop the water tank simulation (switch visuals to gray)";
+
+                if (PanelWaterOperatorButtons != null)
+                {
+                    PanelWaterOperatorButtons.IsEnabled = true;
+                    PanelWaterOperatorButtons.Opacity = 1.0;
+                }
+
+                if (TxtWaterSimStatus != null)
+                {
+                    TxtWaterSimStatus.Text = "RUNNING";
+                    TxtWaterSimStatus.Foreground = new SolidColorBrush(Color.FromRgb(5, 150, 105)); // Green text
+                }
+                if (BadgeWaterSimStatus != null)
+                {
+                    BadgeWaterSimStatus.Background = new SolidColorBrush(Color.FromRgb(236, 253, 245));
+                    BadgeWaterSimStatus.BorderBrush = new SolidColorBrush(Color.FromRgb(167, 243, 208));
+                }
+
+                if (WaterViewbox != null)
+                {
+                    WaterViewbox.Opacity = 1.0;
+                }
+                if (WaterSimDisabledOverlay != null)
+                {
+                    WaterSimDisabledOverlay.Visibility = Visibility.Collapsed;
+                }
+                if (BorderWaterFluid != null)
+                {
+                    BorderWaterFluid.Background = (Brush)FindResource("TankWaterBrush");
+                }
+                if (BorderSurfaceRipple != null)
+                {
+                    BorderSurfaceRipple.Background = new SolidColorBrush(Color.FromRgb(186, 230, 253));
+                }
+                if (TxtWaterLevelPercent != null)
+                {
+                    TxtWaterLevelPercent.Foreground = new SolidColorBrush(Color.FromRgb(2, 132, 199));
+                }
+            }
+            else
+            {
+                // Stopped Gray State (Default)
+                BtnToggleWaterSim.Content = "▶ Start Simulator";
+                BtnToggleWaterSim.Background = new SolidColorBrush(Color.FromRgb(16, 185, 129)); // Green
+                BtnToggleWaterSim.ToolTip = "Start the water tank simulation and real-time physics";
+
+                if (PanelWaterOperatorButtons != null)
+                {
+                    PanelWaterOperatorButtons.IsEnabled = false;
+                    PanelWaterOperatorButtons.Opacity = 0.45;
+                }
+
+                if (TxtWaterSimStatus != null)
+                {
+                    TxtWaterSimStatus.Text = "STOPPED";
+                    TxtWaterSimStatus.Foreground = new SolidColorBrush(Color.FromRgb(100, 116, 139)); // Slate
+                }
+                if (BadgeWaterSimStatus != null)
+                {
+                    BadgeWaterSimStatus.Background = new SolidColorBrush(Color.FromRgb(241, 245, 249));
+                    BadgeWaterSimStatus.BorderBrush = new SolidColorBrush(Color.FromRgb(203, 213, 225));
+                }
+
+                if (WaterViewbox != null)
+                {
+                    WaterViewbox.Opacity = 0.52;
+                }
+                if (WaterSimDisabledOverlay != null)
+                {
+                    WaterSimDisabledOverlay.Visibility = Visibility.Visible;
+                }
+                if (BorderWaterFluid != null)
+                {
+                    BorderWaterFluid.Background = (Brush)FindResource("TankWaterGrayBrush");
+                }
+                if (BorderSurfaceRipple != null)
+                {
+                    BorderSurfaceRipple.Background = new SolidColorBrush(Color.FromRgb(203, 213, 225));
+                }
+                if (TxtWaterLevelPercent != null)
+                {
+                    TxtWaterLevelPercent.Foreground = new SolidColorBrush(Color.FromRgb(148, 163, 184));
+                }
+
+                ApplyWaterSimStoppedVisuals();
+            }
+        }
+
+        private void ApplyWaterSimStoppedVisuals()
+        {
+            if (WaterVolumeContainer == null)
+            {
+                return;
+            }
+
+            // Keep level display height intact but styled in gray
+            double tankChamberMaxHeight = 195.0;
+            double targetHeight = Math.Max(2.0, (_waterLevel / 100.0) * tankChamberMaxHeight);
+            WaterVolumeContainer.Height = targetHeight;
+
+            if (TxtWaterLevelPercent != null)
+            {
+                TxtWaterLevelPercent.Text = $"{_waterLevel:F1} %";
+                TxtWaterLevelPercent.Foreground = new SolidColorBrush(Color.FromRgb(148, 163, 184));
+            }
+
+            int liter = (int)(_waterLevel * 10);
+            if (TxtWaterLevelLiter != null)
+            {
+                TxtWaterLevelLiter.Text = $"{liter} L (D10: {liter})";
+            }
+
+            // Pump gray visuals
+            if (PumpImpellerCore != null)
+            {
+                PumpImpellerCore.Fill = new SolidColorBrush(Color.FromRgb(148, 163, 184));
+            }
+            if (PumpGlow != null)
+            {
+                PumpGlow.Opacity = 0.0;
+            }
+            if (BadgePumpStatus != null)
+            {
+                BadgePumpStatus.Background = new SolidColorBrush(Color.FromRgb(241, 245, 249));
+                BadgePumpStatus.BorderBrush = new SolidColorBrush(Color.FromRgb(203, 213, 225));
+            }
+            if (TxtPumpStatus != null)
+            {
+                TxtPumpStatus.Text = "STOPPED";
+                TxtPumpStatus.Foreground = new SolidColorBrush(Color.FromRgb(148, 163, 184));
+            }
+
+            // Inlet Valve gray visuals
+            if (LedInletValve != null)
+            {
+                LedInletValve.Fill = new SolidColorBrush(Color.FromRgb(148, 163, 184));
+            }
+            if (InletValveGlow != null)
+            {
+                InletValveGlow.Opacity = 0.0;
+            }
+            if (BadgeInletValveStatus != null)
+            {
+                BadgeInletValveStatus.Background = new SolidColorBrush(Color.FromRgb(241, 245, 249));
+                BadgeInletValveStatus.BorderBrush = new SolidColorBrush(Color.FromRgb(203, 213, 225));
+            }
+            if (TxtInletValveStatus != null)
+            {
+                TxtInletValveStatus.Text = "STOPPED";
+                TxtInletValveStatus.Foreground = new SolidColorBrush(Color.FromRgb(148, 163, 184));
+            }
+
+            // Drain Valve gray visuals
+            if (LedDrainValve != null)
+            {
+                LedDrainValve.Fill = new SolidColorBrush(Color.FromRgb(148, 163, 184));
+            }
+            if (DrainValveGlow != null)
+            {
+                DrainValveGlow.Opacity = 0.0;
+            }
+            if (BadgeDrainValveStatus != null)
+            {
+                BadgeDrainValveStatus.Background = new SolidColorBrush(Color.FromRgb(241, 245, 249));
+                BadgeDrainValveStatus.BorderBrush = new SolidColorBrush(Color.FromRgb(203, 213, 225));
+            }
+            if (TxtDrainValveStatus != null)
+            {
+                TxtDrainValveStatus.Text = "STOPPED";
+                TxtDrainValveStatus.Foreground = new SolidColorBrush(Color.FromRgb(148, 163, 184));
+            }
+
+            // Float Sensors gray visuals
+            if (FloatLowBulb != null)
+            {
+                FloatLowBulb.Fill = new SolidColorBrush(Color.FromRgb(148, 163, 184));
+            }
+            if (FloatLowGlow != null)
+            {
+                FloatLowGlow.Opacity = 0.0;
+            }
+            if (BadgeFloatLow != null)
+            {
+                BadgeFloatLow.Background = new SolidColorBrush(Color.FromRgb(241, 245, 249));
+                BadgeFloatLow.BorderBrush = new SolidColorBrush(Color.FromRgb(203, 213, 225));
+            }
+            if (LedFloatLow != null)
+            {
+                LedFloatLow.Fill = new SolidColorBrush(Color.FromRgb(148, 163, 184));
+            }
+            if (TxtFloatLow != null)
+            {
+                TxtFloatLow.Foreground = new SolidColorBrush(Color.FromRgb(148, 163, 184));
+            }
+
+            if (FloatHighBulb != null)
+            {
+                FloatHighBulb.Fill = new SolidColorBrush(Color.FromRgb(148, 163, 184));
+            }
+            if (FloatHighGlow != null)
+            {
+                FloatHighGlow.Opacity = 0.0;
+            }
+            if (BadgeFloatHigh != null)
+            {
+                BadgeFloatHigh.Background = new SolidColorBrush(Color.FromRgb(241, 245, 249));
+                BadgeFloatHigh.BorderBrush = new SolidColorBrush(Color.FromRgb(203, 213, 225));
+            }
+            if (LedFloatHigh != null)
+            {
+                LedFloatHigh.Fill = new SolidColorBrush(Color.FromRgb(148, 163, 184));
+            }
+            if (TxtFloatHigh != null)
+            {
+                TxtFloatHigh.Foreground = new SolidColorBrush(Color.FromRgb(148, 163, 184));
+            }
+
+            // Pipe streams hidden
+            if (InletPipeWaterBottom != null) InletPipeWaterBottom.Visibility = Visibility.Collapsed;
+            if (InletPipeWaterMid != null) InletPipeWaterMid.Visibility = Visibility.Collapsed;
+            if (InletPipeWaterBottomTurn != null) InletPipeWaterBottomTurn.Visibility = Visibility.Collapsed;
+            if (InletPipeWaterVert != null) InletPipeWaterVert.Visibility = Visibility.Collapsed;
+            if (InletPipeWaterTop != null) InletPipeWaterTop.Visibility = Visibility.Collapsed;
+            if (WaterInletStream != null) WaterInletStream.Visibility = Visibility.Collapsed;
+
+            if (DrainPipeWater1 != null) DrainPipeWater1.Visibility = Visibility.Collapsed;
+            if (DrainPipeWater2 != null) DrainPipeWater2.Visibility = Visibility.Collapsed;
+            if (DrainPipeWater != null) DrainPipeWater.Visibility = Visibility.Collapsed;
+            if (WaterDrainStream != null) WaterDrainStream.Visibility = Visibility.Collapsed;
+
+            if (TxtFillingStatus != null)
+            {
+                TxtFillingStatus.Text = "SIMULATOR STOPPED";
+                TxtFillingStatus.Foreground = new SolidColorBrush(Color.FromRgb(148, 163, 184));
+            }
+            if (TxtDrainingStatus != null)
+            {
+                TxtDrainingStatus.Text = "SIMULATOR STOPPED";
+                TxtDrainingStatus.Foreground = new SolidColorBrush(Color.FromRgb(148, 163, 184));
+            }
+        }
+
         private void UpdateWaterSystemPhysics(ushort outWord)
         {
             if (WaterVolumeContainer == null) return;
+
+            if (!_isWaterSimRunning)
+            {
+                ApplyWaterSimStoppedVisuals();
+                return;
+            }
 
             // Extract PLC outputs:
             // CIO 100.00 = Inlet Pump
@@ -1071,30 +1533,35 @@ namespace NetToCXSim
 
         private void BtnWaterStart_Down(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
+            if (!_isWaterSimRunning) return;
             _simEngine.WriteBit(OmronSimulatorEngine.MemoryArea.CIO, 0, 0, true);
             Log("[WATER SYSTEM] Start Auto PB (CIO 0.00) PRESSED (ON)");
         }
 
         private void BtnWaterStart_Up(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
+            if (!_isWaterSimRunning) return;
             _simEngine.WriteBit(OmronSimulatorEngine.MemoryArea.CIO, 0, 0, false);
             Log("[WATER SYSTEM] Start Auto PB (CIO 0.00) RELEASED (OFF)");
         }
 
         private void BtnWaterStop_Down(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
+            if (!_isWaterSimRunning) return;
             _simEngine.WriteBit(OmronSimulatorEngine.MemoryArea.CIO, 0, 1, true);
             Log("[WATER SYSTEM] Stop PB (CIO 0.01) PRESSED (ON)");
         }
 
         private void BtnWaterStop_Up(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
+            if (!_isWaterSimRunning) return;
             _simEngine.WriteBit(OmronSimulatorEngine.MemoryArea.CIO, 0, 1, false);
             Log("[WATER SYSTEM] Stop PB (CIO 0.01) RELEASED (OFF)");
         }
 
         private void BtnManualFill_Click(object sender, RoutedEventArgs e)
         {
+            if (!_isWaterSimRunning) return;
             // Toggle Pump & Inlet Valve for testing
             bool? curPump = _simEngine.ReadBit("100.0");
             bool newVal = !(curPump ?? false);
@@ -1106,6 +1573,7 @@ namespace NetToCXSim
 
         private void BtnManualDrain_Click(object sender, RoutedEventArgs e)
         {
+            if (!_isWaterSimRunning) return;
             // Toggle Drain Valve
             bool? curDrain = _simEngine.ReadBit("100.2");
             bool newVal = !(curDrain ?? false);
@@ -1116,6 +1584,7 @@ namespace NetToCXSim
 
         private void BtnResetLevel_Click(object sender, RoutedEventArgs e)
         {
+            if (!_isWaterSimRunning) return;
             _waterLevel = 15.0;
             _simEngine.WriteWord("D10", 150);
             Log("[WATER SYSTEM] Water Level reset to 15.0% (150 L)");
@@ -1172,6 +1641,10 @@ namespace NetToCXSim
 
             TxtOpcClientsCount.Text = _opcDaServer.ClientCount.ToString();
             TxtOpcTotalTags.Text = _opcDaServer.Tags.Count.ToString();
+            if (TxtOpcUaTotalTags != null)
+            {
+                TxtOpcUaTotalTags.Text = _opcDaServer.Tags.Count.ToString();
+            }
         }
 
         private void BtnStartOpcServer_Click(object sender, RoutedEventArgs e)
@@ -1422,10 +1895,234 @@ namespace NetToCXSim
         }
         #endregion
 
+        #region OPC UA Server Tab Event Handlers
+        private void UpdateOpcUaServerUI()
+        {
+            if (_opcUaServer == null)
+            {
+                return;
+            }
+
+            if (_opcUaServer.IsRunning)
+            {
+                TxtOpcUaServerStatus.Text = "OPC UA SERVER: RUNNING (AUTO-STARTED)";
+                TxtOpcUaServerStatus.Foreground = new SolidColorBrush(Color.FromRgb(4, 120, 87));
+                OpcUaStatusLed.Fill = new SolidColorBrush(Color.FromRgb(16, 185, 129));
+                BtnStartOpcUaServer.Visibility = Visibility.Collapsed;
+                BtnStopOpcUaServer.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                TxtOpcUaServerStatus.Text = "OPC UA SERVER: STOPPED";
+                TxtOpcUaServerStatus.Foreground = new SolidColorBrush(Color.FromRgb(220, 38, 38));
+                OpcUaStatusLed.Fill = new SolidColorBrush(Color.FromRgb(239, 68, 68));
+                BtnStartOpcUaServer.Visibility = Visibility.Visible;
+                BtnStopOpcUaServer.Visibility = Visibility.Collapsed;
+            }
+
+            TxtOpcUaEndpoint.Text = _opcUaServer.ActiveEndpoint;
+            TxtOpcUaNetworkEndpoint.Text = _opcUaServer.NetworkEndpoint;
+
+            if (!TxtOpcUaPort.IsFocused)
+            {
+                TxtOpcUaPort.Text = _opcUaServer.ActivePort.ToString();
+            }
+
+            if (TxtOpcUaClientsCount != null)
+            {
+                TxtOpcUaClientsCount.Text = _opcUaServer.ClientCount.ToString();
+            }
+            TxtOpcUaTotalTags.Text = _opcDaServer.Tags.Count.ToString();
+
+            if (TxtDiagramUaPort != null)
+            {
+                TxtDiagramUaPort.Text = $" :{_opcUaServer.ActivePort}";
+            }
+
+            if (!string.IsNullOrEmpty(_opcUaServer.PortCollisionNotice))
+            {
+                BorderOpcUaPortNotice.Visibility = Visibility.Visible;
+                TxtOpcUaPortNotice.Text = _opcUaServer.PortCollisionNotice;
+            }
+            else
+            {
+                BorderOpcUaPortNotice.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        private async void BtnStartOpcUaServer_Click(object sender, RoutedEventArgs e)
+        {
+            int port = _opcUaServer.ActivePort;
+            if (int.TryParse(TxtOpcUaPort.Text.Trim(), out int customPort))
+            {
+                if (customPort >= 1024 && customPort <= 65535)
+                {
+                    port = customPort;
+                }
+            }
+            await _opcUaServer.StartServerAsync(port);
+            UpdateOpcUaServerUI();
+        }
+
+        private void BtnOpcUaPortUp_Click(object sender, RoutedEventArgs e)
+        {
+            if (int.TryParse(TxtOpcUaPort.Text.Trim(), out int port))
+            {
+                if (port < 65535)
+                {
+                    port++;
+                    TxtOpcUaPort.Text = port.ToString();
+                    if (_appSettings != null)
+                    {
+                        _appSettings.OpcUaPort = port;
+                        _appSettings.Save();
+                    }
+                    if (_opcUaServer.IsRunning)
+                    {
+                        System.Threading.Tasks.Task.Run(async () =>
+                        {
+                            await _opcUaServer.RestartServerAsync(port);
+                            Dispatcher.Invoke(UpdateOpcUaServerUI);
+                        });
+                    }
+                }
+            }
+        }
+
+        private void BtnOpcUaPortDown_Click(object sender, RoutedEventArgs e)
+        {
+            if (int.TryParse(TxtOpcUaPort.Text.Trim(), out int port))
+            {
+                if (port > 1024)
+                {
+                    port--;
+                    TxtOpcUaPort.Text = port.ToString();
+                    if (_appSettings != null)
+                    {
+                        _appSettings.OpcUaPort = port;
+                        _appSettings.Save();
+                    }
+                    if (_opcUaServer.IsRunning)
+                    {
+                        System.Threading.Tasks.Task.Run(async () =>
+                        {
+                            await _opcUaServer.RestartServerAsync(port);
+                            Dispatcher.Invoke(UpdateOpcUaServerUI);
+                        });
+                    }
+                }
+            }
+        }
+
+        private void BtnStopOpcUaServer_Click(object sender, RoutedEventArgs e)
+        {
+            _opcUaServer.StopServer();
+            UpdateOpcUaServerUI();
+        }
+
+        private void BtnCopyUaEndpoint_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                Clipboard.SetText(_opcUaServer.ActiveEndpoint);
+                MessageBox.Show($"OPC UA Endpoint URL copied to clipboard:\n{_opcUaServer.ActiveEndpoint}",
+                                "Endpoint Copied", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to copy endpoint:\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void BtnSwitchToOpcDaTab_Click(object sender, RoutedEventArgs e)
+        {
+            TabOpcDaServer.IsSelected = true;
+        }
+        #endregion
+
+        #region FINS TCP Port Numeric UpDown
+        private void BtnFinsPortUp_Click(object sender, RoutedEventArgs e)
+        {
+            if (int.TryParse(TxtFinsPort.Text.Trim(), out int port))
+            {
+                if (port < 65535)
+                {
+                    int nextPort = port + 1;
+                    ApplyFinsPortChange(nextPort);
+                }
+            }
+        }
+
+        private void BtnFinsPortDown_Click(object sender, RoutedEventArgs e)
+        {
+            if (int.TryParse(TxtFinsPort.Text.Trim(), out int port))
+            {
+                if (port > 1024)
+                {
+                    int prevPort = port - 1;
+                    ApplyFinsPortChange(prevPort);
+                }
+            }
+        }
+
+        private void TxtFinsPort_LostFocus(object sender, RoutedEventArgs e)
+        {
+            ValidateAndApplyFinsPort();
+        }
+
+        private void TxtFinsPort_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                ValidateAndApplyFinsPort();
+                Keyboard.ClearFocus();
+            }
+        }
+
+        private void ValidateAndApplyFinsPort()
+        {
+            if (int.TryParse(TxtFinsPort.Text.Trim(), out int port))
+            {
+                if (port >= 1024 && port <= 65535)
+                {
+                    ApplyFinsPortChange(port);
+                    return;
+                }
+            }
+
+            // If invalid, revert to active server port
+            if (_finsServer != null)
+            {
+                TxtFinsPort.Text = _finsServer.Port.ToString();
+            }
+        }
+
+        private void ApplyFinsPortChange(int requestedPort)
+        {
+            if (_finsServer != null)
+            {
+                int actualPort = _finsServer.Restart(requestedPort);
+                if (TxtFinsPort != null)
+                {
+                    TxtFinsPort.Text = actualPort.ToString();
+                }
+
+                if (_appSettings != null)
+                {
+                    _appSettings.FinsPort = actualPort;
+                    _appSettings.Save();
+                }
+
+                UpdateServerPortDisplay();
+            }
+        }
+        #endregion
+
         protected override void OnClosed(EventArgs e)
         {
             _pollTimer.Stop();
             _opcDaServer?.StopServer();
+            _opcUaServer?.Dispose();
             _finsServer?.Dispose();
             _simEngine.Dispose();
             base.OnClosed(e);

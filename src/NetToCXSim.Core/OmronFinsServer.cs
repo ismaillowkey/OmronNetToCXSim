@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
@@ -10,7 +11,7 @@ using System.Threading.Tasks;
 namespace NetToCXSim.Services
 {
     /// <summary>
-    /// Omron FINS TCP &amp; UDP Server Bridge for CX-Simulator.
+    /// Omron FINS TCP Server Bridge for CX-Simulator.
     /// Enables external clients (Weintek EasyBuilder Pro, SCADA, Node-RED, IoTClient)
     /// to connect to localhost:9600 or PC LAN IP and read/write live simulator memory.
     /// </summary>
@@ -18,11 +19,10 @@ namespace NetToCXSim.Services
     {
         private readonly OmronSimulatorEngine _simEngine;
         private int _port;
-        private readonly int _basePort;
+        private int _basePort;
         private readonly string _ip;
 
         private TcpListener _tcpListener;
-        private UdpClient _udpListener;
         private CancellationTokenSource _cts;
 
         private readonly List<Socket> _activeTcpClients = new List<Socket>();
@@ -65,20 +65,16 @@ namespace NetToCXSim.Services
             {
                 int testPort = startPort + i;
                 TcpListener testTcp = null;
-                UdpClient testUdp = null;
 
                 try
                 {
-                    // 1. Try starting TCP Server for FINS/TCP
+                    // Start TCP Server for FINS/TCP with address reuse
                     testTcp = new TcpListener(bindIp, testPort);
+                    testTcp.ExclusiveAddressUse = false;
+                    testTcp.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
                     testTcp.Start();
 
-                    // 2. Try starting UDP Server for FINS/UDP
-                    testUdp = new UdpClient(new IPEndPoint(bindIp, testPort));
-
-                    // Both successfully bound without exception!
                     _tcpListener = testTcp;
-                    _udpListener = testUdp;
                     _port = testPort;
                     started = true;
                     break;
@@ -86,30 +82,118 @@ namespace NetToCXSim.Services
                 catch (SocketException ex)
                 {
                     try { testTcp?.Stop(); } catch { }
-                    try { testUdp?.Close(); } catch { }
 
-                    Log($"[FINS BRIDGE] Port {testPort} is already in use ({ex.SocketErrorCode}). Trying port {testPort + 1}...");
+                    Log($"[FINS TCP] Port {testPort} is already in use ({ex.SocketErrorCode}). Trying port {testPort + 1}...");
                 }
                 catch (Exception ex)
                 {
                     try { testTcp?.Stop(); } catch { }
-                    try { testUdp?.Close(); } catch { }
 
-                    Log($"[FINS BRIDGE] Port {testPort} error: {ex.Message}. Trying port {testPort + 1}...");
+                    Log($"[FINS TCP] Port {testPort} error: {ex.Message}. Trying port {testPort + 1}...");
                 }
             }
 
             if (started)
             {
                 Task.Run(() => AcceptTcpClientsAsync(_tcpListener, _cts.Token));
-                Task.Run(() => ReceiveUdpPacketsAsync(_udpListener, _cts.Token));
                 IsRunning = true;
-                Log($"[FINS BRIDGE] Server listening on {bindIp}:{_port} (TCP & UDP ready for EasyBuilder Pro / SCADA)");
+                Log($"[FINS TCP] Server listening on {bindIp}:{_port} (TCP ready for EasyBuilder Pro / SCADA)");
             }
             else
             {
-                Log($"[FINS BRIDGE ERROR] Failed to open FINS Server port between {startPort} and {startPort + maxPortAttempts - 1}.");
+                Log($"[FINS TCP ERROR] Failed to open FINS TCP Server port between {startPort} and {startPort + maxPortAttempts - 1}.");
             }
+        }
+
+        /// <summary>
+        /// Checks whether a TCP port is currently occupied by an active listener or connection on the system,
+        /// or cannot be bound exclusively.
+        /// </summary>
+        public static bool IsPortOccupied(int port)
+        {
+            try
+            {
+                var ipGlobal = IPGlobalProperties.GetIPGlobalProperties();
+                var listeners = ipGlobal.GetActiveTcpListeners();
+                for (int i = 0; i < listeners.Length; i++)
+                {
+                    if (listeners[i].Port == port)
+                    {
+                        return true;
+                    }
+                }
+            }
+            catch
+            {
+                // Fallback to direct socket probe below
+            }
+
+            TcpListener testListener = null;
+            try
+            {
+                testListener = new TcpListener(IPAddress.Any, port);
+                testListener.ExclusiveAddressUse = false;
+                testListener.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+                testListener.Start();
+                return false;
+            }
+            catch
+            {
+                return true;
+            }
+            finally
+            {
+                if (testListener != null)
+                {
+                    try
+                    {
+                        testListener.Stop();
+                    }
+                    catch { }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Restarts FINS TCP server with the requested port.
+        /// If the requested port is in use, automatically shifts up to the next available port.
+        /// Returns the actual port the server is now running on.
+        /// </summary>
+        public int Restart(int requestedPort)
+        {
+            Stop();
+
+            int candidatePort = requestedPort;
+            if (candidatePort < 1024)
+            {
+                candidatePort = 9600;
+            }
+
+            const int maxAttempts = 100;
+            int attempts = 0;
+
+            while (attempts < maxAttempts)
+            {
+                bool inUse = IsPortOccupied(candidatePort);
+                if (!inUse)
+                {
+                    break;
+                }
+
+                Log($"[FINS TCP] Port {candidatePort} is in use. Shifting up to {candidatePort + 1}...");
+                candidatePort++;
+                attempts++;
+            }
+
+            _basePort = candidatePort;
+            Start();
+
+            if (candidatePort != requestedPort)
+            {
+                Log($"[FINS TCP] Port {requestedPort} was in use. Automatically shifted up and started on port {_port}.");
+            }
+
+            return _port;
         }
 
         public void Stop()
@@ -122,7 +206,6 @@ namespace NetToCXSim.Services
                 _cts?.Cancel();
 
                 _tcpListener?.Stop();
-                _udpListener?.Close();
 
                 lock (_clientsLock)
                 {
@@ -138,11 +221,11 @@ namespace NetToCXSim.Services
                     _activeTcpClients.Clear();
                 }
 
-                Log("[FINS BRIDGE] Server stopped.");
+                Log("[FINS TCP] Server stopped.");
             }
             catch (Exception ex)
             {
-                Log($"[FINS BRIDGE] Error stopping server: {ex.Message}");
+                Log($"[FINS TCP] Error stopping server: {ex.Message}");
             }
         }
 
@@ -291,32 +374,7 @@ namespace NetToCXSim.Services
         }
         #endregion
 
-        #region UDP Handling
-        private async Task ReceiveUdpPacketsAsync(UdpClient listener, CancellationToken token)
-        {
-            while (!token.IsCancellationRequested)
-            {
-                try
-                {
-                    UdpReceiveResult result = await listener.ReceiveAsync();
-                    byte[] requestData = result.Buffer;
-                    string ep = result.RemoteEndPoint.ToString();
 
-                    byte[] finsResponse = ProcessFinsFrame(requestData, ep, 10);
-                    if (finsResponse != null)
-                    {
-                        await listener.SendAsync(finsResponse, finsResponse.Length, result.RemoteEndPoint);
-                    }
-                }
-                catch (ObjectDisposedException) { break; }
-                catch (Exception ex)
-                {
-                    if (token.IsCancellationRequested) break;
-                    Log($"[FINS UDP] Error: {ex.Message}");
-                }
-            }
-        }
-        #endregion
 
         #region FINS Core Protocol Parsing
         /// <summary>

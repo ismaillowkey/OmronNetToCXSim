@@ -1,9 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net472;netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>net472;net8.0-windows</TargetFrameworks>
     <RootNamespace>NetToCXSim.Core</RootNamespace>
     <AssemblyName>NetToCXSim.Core</AssemblyName>
-    <Description>Core communication library for Omron CX-Simulator PLC memory access and FINS TCP/UDP server</Description>
+    <Description>Core communication library for Omron CX-Simulator PLC memory access and FINS TCP server</Description>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <LangVersion>latest</LangVersion>
+    <NoWarn>NU1701</NoWarn>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+    <PackageReference Include="OPCFoundation.NetStandard.Opc.Ua.Server" Version="1.5.378.182" />
+  </ItemGroup>
 </Project>
